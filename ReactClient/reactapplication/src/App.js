@@ -32,8 +32,10 @@ class App extends Component {
 
           <div>
           <form onSubmit={this.handleSubmit}>
-            <input type="text" name="name" placeholder="Enter your name..." value={this.state.value} onChange={this.handleChange} />
-            <input type="submit" value="Submit" />
+            <div class="form-group">
+              <input type="text" name="name" class="form-control" placeholder="Enter your name..." value={this.state.value} onChange={this.handleChange} />
+              <input type="submit" class="btn btn-primary" value="Submit" />
+            </div>
           </form>
         </div>
         </header>
