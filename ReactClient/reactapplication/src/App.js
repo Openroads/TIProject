@@ -1,12 +1,18 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import axios from 'axios';
 
 class App extends Component {
 
   constructor(props){
     super(props);
-    this.state = {value: ''};
+    this.state = 
+    {
+      value: '',
+      userName: '',
+      persons: []
+    };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -16,8 +22,25 @@ class App extends Component {
   }
 
   handleSubmit(event){
-    alert('Your name is: ' + this.state.value);
-    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+
+    //axios
+        //.get(`localhost:8000/hello-api/by-name/${this.state.value}`)
+        //.then(
+          //response => {
+            //const per = response.data;
+            //this.setState({userName: per});
+          //})
+
+          fetch(`http://localhost:8000/hello-api/by-name/${this.state.value}`)
+          .then(response => 
+            {
+              this.setState({userName: response});
+            })
+
+    alert(this.state.userName);
+    //event.preventDefault();
   }
 
 
@@ -32,9 +55,9 @@ class App extends Component {
 
           <div>
           <form onSubmit={this.handleSubmit}>
-            <div class="form-group">
-              <input type="text" name="name" class="form-control" placeholder="Enter your name..." value={this.state.value} onChange={this.handleChange} />
-              <input type="submit" class="btn btn-primary" value="Submit" />
+            <div className="form-group">
+              <input type="text" id="name" name="name" className="form-control" placeholder="Enter your name..." value={this.state.value} onChange={this.handleChange} />
+              <input type="submit" className="btn btn-primary" value="Submit" />
             </div>
           </form>
         </div>
