@@ -33,7 +33,7 @@ class App extends Component {
             //this.setState({userName: per});
           //})
 
-          fetch(`http://localhost:8000/hello-api/by-name/${this.state.value}`)
+          fetch(`http://192.168.1.191:8000/hello-api/by-name/${this.state.value}`)
           .then(response => 
             {
               this.setState({userName: response});
