@@ -1,7 +1,9 @@
 import React from 'react';
-import NavDropDown from './NavDropDown';
+import { Navbar, NavbarBrand, NavbarNav, NavbarToggler, Collapse, NavItem, NavLink, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'mdbreact';
+import { BrowserRouter as Router } from 'react-router-dom';
 import Logo from '../../Images/Logo.png';
 
+/** 
 const NavItem = props => {
     const pageURI = window.location.pathname+window.location.search
     const liClassName = (props.path === pageURI) ? "nav-item active" : "nav-item";
@@ -15,35 +17,63 @@ const NavItem = props => {
             </li>
   );
 }
+*/
+class Navigation extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            collapse: false,
+            isWideEnough: false,
+        };
+    this.onClick = this.onClick.bind(this);
+    }
 
-class Navigation extends React.Component{
-    render(){
-        return(
-            <nav className="navbar navbar-expand-lg navbar-light bg-light">
-                <a className="navbar-brand" href="/"><img src={Logo}/> Documents</a>
-                <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-
-                <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul className="navbar-nav mr-auto">
-                    <NavItem path="/" name="Home" />
-                    <NavItem path="/Login" name="Login" />
-                    
-                    <NavDropDown name="Dropdown">
-                        <a className="dropdown-item" href="/">Action</a>
-                        <a className="dropdown-item" href="/">Another action</a>
-                        <div className="dropdown-divider"></div>
-                        <a className="dropdown-item" href="/">Something else here</a>
-                    </NavDropDown>
-                    
-                    </ul>
-                    <form className="form-inline my-2 my-lg-0">
-                        <input className="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" />
-                        <button className="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                    </form>
-                </div>
-            </nav>
+    onClick(){
+        this.setState({
+            collapse: !this.state.collapse,
+        });
+    }
+    render() {
+        return (
+            <Router>
+                <Navbar color="indigo" dark expand="md" scrolling>
+                    <NavbarBrand href="/">
+                        <strong>Navbar</strong>
+                    </NavbarBrand>
+                    { !this.state.isWideEnough && <NavbarToggler onClick = { this.onClick } />}
+                    <Collapse isOpen = { this.state.collapse } navbar>
+                        <NavbarNav left>
+                          <NavItem active>
+                              <NavLink to="/">Home</NavLink>
+                          </NavItem>
+                          <NavItem>
+                              <NavLink to="/Login">Login</NavLink>
+                          </NavItem>
+                          <NavItem>
+                              <NavLink to="/HelloWorld">Hello World</NavLink>
+                          </NavItem>
+                          <NavItem>
+                            <Dropdown>
+                                <DropdownToggle nav caret>Dropdown</DropdownToggle>
+                                <DropdownMenu>
+                                    <DropdownItem href="#">Action</DropdownItem>
+                                    <DropdownItem href="#">Another Action</DropdownItem>
+                                    <DropdownItem href="#">Something else here</DropdownItem>
+                                    <DropdownItem href="#">Something else here</DropdownItem>
+                                </DropdownMenu>
+                            </Dropdown>
+                          </NavItem>
+                        </NavbarNav>
+                        <NavbarNav right>
+                          <NavItem>
+                            <form className="form-inline md-form mt-0">
+                              <input className="form-control mr-sm-2 mb-0 text-white" type="text" placeholder="Search" aria-label="Search"/>
+                            </form>
+                          </NavItem>
+                        </NavbarNav>
+                    </Collapse>
+                </Navbar>
+            </Router>
         );
     }
 }
