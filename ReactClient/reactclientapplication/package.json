@@ -5,12 +5,13 @@
   "dependencies": {
     "axios": "^0.18.0",
     "chart.js": "^2.7.2",
-    "mdbreact": "4.8.1",
+    "mdbreact": "^4.8.1",
     "react": "^16.5.0",
     "react-chartjs-2": "^2.7.4",
     "react-dom": "^16.5.0",
     "react-scripts": "1.1.5",
-    "salad-ui.chart": "^1.1.55"
+    "salad-ui.chart": "^1.1.55",
+    "spawn-sync": "^2.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
