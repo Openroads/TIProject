@@ -6,15 +6,15 @@ import {
     Row,
     CardBody,
   } from "mdbreact";
-
+  import axios from 'axios';
 
 class HelloWorld extends React.Component {
     constructor(props){
         super(props);
         this.state = 
         {
-            inputUserName: "",
-            message: ""
+            inputUserName: '',
+            message: ''
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -27,11 +27,11 @@ class HelloWorld extends React.Component {
         });
     }
 
-    handleSubmit()
+    handleSubmit(event)
     {
-        fetch('https://jsonplaceholder.typicode.com/todos/1')
-        .then(response => response.json())
-        .then(json => alert(json.title))
+        event.preventDefault();
+        axios.get(`https://localhost:44322/api/HelloWorld/${this.state.inputUserName}`)
+        .then(response => alert(response.data))
     }
 
     render(){

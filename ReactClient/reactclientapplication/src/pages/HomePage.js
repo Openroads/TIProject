@@ -20,14 +20,21 @@ import {
 const NavLink = require("react-router-dom").NavLink;
 
 class HomePage extends React.Component {
-  constructor(props) {
+  constructor(props) 
+  {
     super(props);
     this.state = {
       modal: false,
-      username:'',
-      password:''
+      username: "",
+      password: "",
+      name: "",
+      surname: "",
+      user: []
     };
+
     this.toggle = this.toggle.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   toggle() {
@@ -36,7 +43,41 @@ class HomePage extends React.Component {
     });
   }
 
+  handleChange = event => {
+    this.setState({
+        [event.target.id] : event.target.value
+    });
+}
+
   handleClick(event){
+
+    var self = this;
+    
+
+    //event.preventDefault();
+    axios.get(`https://localhost:44322/api/Login/${this.state.username}/${this.state.password}`)
+    .then(response => 
+      {
+        self.setState({user: response.data, name: response.data.name, surname: response.data.surname});
+      })
+
+    alert(this.state.user);
+    
+    if(this.state.name != "" && this.state.surname != "")
+    {
+      this.props.history.push(
+        {
+          pathname: '/Dashboard',
+          state: {user: this.state.username}
+        }
+      )
+    }
+    
+
+
+
+
+    /*
     var apiBaseUrl = "http://localhost:4000/api/";
     var self = this;
     var payload={
@@ -61,7 +102,7 @@ class HomePage extends React.Component {
     })
       .catch(function (error) {
       console.log(error);
-    });
+    }); */
     }
 
   render() {
@@ -117,14 +158,16 @@ class HomePage extends React.Component {
                   validate
                   error="wrong"
                   success="right"
-                  onChange = {(event,newValue) => this.setState({username:newValue})}
+                  id="username"
+                  onChange = {this.handleChange}
                 />
                 <Input
                   size="sm"
                   type="password"
                   label="Password"
                   icon="key"
-                  onChange = {(event,newValue) => this.setState({password:newValue})}
+                  id="password"
+                  onChange = {this.handleChange}
                 />
               </ModalBody>
               <ModalFooter>
