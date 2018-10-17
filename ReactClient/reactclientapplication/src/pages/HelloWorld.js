@@ -30,7 +30,7 @@ class HelloWorld extends React.Component {
     handleSubmit(event)
     {
         event.preventDefault();
-        axios.get(`https://localhost:44322/api/HelloWorld/${this.state.inputUserName}`)
+        axios.get(`http://localhost:8000/hello-api/by-name/${this.state.inputUserName}`)
         .then(response => alert(response.data))
     }
 
