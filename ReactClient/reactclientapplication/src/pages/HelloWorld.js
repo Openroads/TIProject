@@ -7,6 +7,7 @@ import {
     CardBody,
   } from "mdbreact";
   import axios from 'axios';
+  import SockJS from 'sockjs-client';
 
 class HelloWorld extends React.Component {
     constructor(props){
@@ -14,11 +15,29 @@ class HelloWorld extends React.Component {
         this.state = 
         {
             inputUserName: '',
-            message: ''
+            message: '',
+            messages: []
+        };
+
+        // Create socket connection
+        this.sock = new SockJS('https://chat-server.azurewebsites.net/chat');
+
+        this.sock.onopen = () => {
+            console.log('Socket connection opened');
+        };
+
+        this.sock.onmessage = e => {
+            console.log('Message received: ', e.data);
+            this.setState({messages: [...this.state.messages, e.data]});
+        };
+
+        this.sock.onclose = () => {
+            console.log('Connection closed');
         };
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleWebSockSubmit = this.handleWebSockSubmit.bind(this);
     }
 
     handleChange = event => {
@@ -34,7 +53,14 @@ class HelloWorld extends React.Component {
         .then(response => alert(response.data))
     }
 
+    handleWebSockSubmit(e){
+        e.preventDefault();
+        let text = this.refs.messageText.value;
+        this.sock.send(text);
+    }
+
     render(){
+        let i = 0;
         return(
             <div>
                 <EdgeHeader color="indigo darken-3" />
@@ -54,6 +80,35 @@ class HelloWorld extends React.Component {
                                 <input type="submit" className="btn btn-primary" value="Submit" />
                             </form>
                         </div>
+                        </Row>
+                        </CardBody>
+                    </Col>  
+                    </Row>
+                    <Row>
+                    <Col md="10" className="mx-auto float-none white z-depth-1 py-2 px-2">
+                        <CardBody>
+                        <h2 className="h2-responsive mb-4">
+                            <strong>Hello world with WebSockets</strong>
+                        </h2>
+                        <Row className="d-flex flex-row justify-content-center row">
+                        <div>
+                            <form onSubmit={this.handleWebSockSubmit}>
+                                <div className="form-group">
+                                <input type="text" ref="messageText" className="form-control" placeholder="Type your message..." />
+                                </div>
+                                <input type="submit" className="btn btn-primary" value="Submit" />
+                            </form>
+                        </div>
+                        <div>
+                            <h3>Messages</h3>
+                            <hr />
+                            <ul>
+                                {this.state.messages.map(msg => {
+                                    return <li key={i++}>{msg}</li>
+                                })}
+                            </ul>
+                        </div>
+
                         </Row>
                         </CardBody>
                     </Col>  
