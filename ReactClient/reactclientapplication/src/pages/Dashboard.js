@@ -1,22 +1,18 @@
 import React from 'react';
 import {
-    Input,
     Button,
     EdgeHeader,
     FreeBird,
-    Container,
     Col,
     Row,
     CardBody,
-    Card,
     Modal,
     ModalBody,
     ModalFooter,
     Fa
   } from "mdbreact";
-import { deflate } from 'zlib';
 import DocumentList from './DocumentList';
-  const NavLink = require("react-router-dom").NavLink;
+import axios from 'axios';
 
 class Dashboard extends React.Component 
 {
@@ -33,6 +29,17 @@ class Dashboard extends React.Component
 
         this.handleChange = this.handleChange.bind(this);
         this.toggle = this.toggle.bind(this);
+        this.handleClick = this.handleClick.bind(this);
+        this.getDocuments = this.getDocuments.bind(this);
+
+        this.getDocuments();
+    }
+
+    getDocuments()
+    {
+        //event.preventDefault();
+        axios.get('https://jsonplaceholder.typicode.com/posts')
+        .then(response => this.setState({documents: response.data}))
     }
 
     handleChange = event => {
@@ -45,7 +52,25 @@ class Dashboard extends React.Component
         this.setState({
           modal: !this.state.modal
         });
-      }
+    }
+
+    handleClick(){
+        this.state.documents.push({"id": "2", "title": "Dupa"});
+    }
+
+    documentCallback = (dataFromCallback) => {
+        let title;
+        let content;
+
+        for(var i = 0; i < this.state.documents.length; i+=1){
+            if(dataFromCallback.toString() === this.state.documents[i].id.toString())
+            {
+                title = this.state.documents[i].title;
+                content = this.state.documents[i].body;
+                alert(title);
+            }
+        }
+    }
 
 
     render()
@@ -80,7 +105,7 @@ class Dashboard extends React.Component
                                 </a>
                                 </div>
                                 <div className="documentList">
-                                    <DocumentList />
+                                    <DocumentList Documents={this.state.documents} callbackFromParent={this.documentCallback}/>
                                 </div>
                         </div>
                         </Row>

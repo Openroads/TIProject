@@ -7,17 +7,14 @@ import {
   Button,
   EdgeHeader,
   FreeBird,
-  Container,
   Col,
   Row,
   CardBody,
-  Card,
   Modal,
   ModalBody,
   ModalFooter,
   Fa
 } from "mdbreact";
-const NavLink = require("react-router-dom").NavLink;
 
 class HomePage extends React.Component {
   constructor(props) 
@@ -63,7 +60,7 @@ class HomePage extends React.Component {
 
     alert(this.state.user);
     
-    if(this.state.name != "" && this.state.surname != "")
+    if(this.state.name !== "" && this.state.surname !== "")
     {
       this.props.history.push(
         {

@@ -8,7 +8,6 @@ import {
   NavItem,
   Footer,
   NavLink,
-  Input
 } from "mdbreact";
 import { BrowserRouter as Router } from "react-router-dom";
 import "./index.css";
