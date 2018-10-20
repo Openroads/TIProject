@@ -66,12 +66,23 @@ class Dashboard extends React.Component
     resetInput(){
         document.getElementById("fileTitle").value = "";
         document.getElementById("fileContent").value = "";
+        this.setState({fileContent: '', fileTitle: ''});
     }
 
     handleSave(){
-        this.state.documents.push({"id": "2", "title": this.state.fileTitle.toString()});
-        // Todo: Push to the server
-        //this.getDocuments();
+
+        axios.post('https://jsonplaceholder.typicode.com/posts', {
+            title: this.state.fileTitle,
+            body: this.state.fileContent,
+            userId: 6969
+        })
+        .then(function (response) {
+            console.log(response);
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
         this.toggle();
     }
 
@@ -79,7 +90,7 @@ class Dashboard extends React.Component
         let title = dataFromCallback.title;
         let content = dataFromCallback.content;
 
-        if(title !== "" && content !== "" && title != undefined && content != undefined)
+        if(title !== "" && content !== "" && title !== undefined && content !== undefined)
         {
             this.setState({fileTitle: title, fileContent: content});
             this.toggle();

@@ -33,7 +33,7 @@ class DocumentList extends React.Component{
 
     isModifing(doc)
     {
-        if(doc.name == undefined)
+        if(doc.name === undefined)
         {
             return '';
         }
