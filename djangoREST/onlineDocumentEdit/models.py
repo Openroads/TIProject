@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
@@ -10,3 +11,7 @@ class Document(models.Model):
     content = models.CharField(max_length=3500, null=True)
 
     version = models.IntegerField(null=False)
+
+    createdBy = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='%(class)s_document_created_by', default=1)
+
+    editingBy = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, related_name='%(class)s_document_editing_by')

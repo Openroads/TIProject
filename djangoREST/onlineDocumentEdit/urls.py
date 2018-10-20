@@ -1,8 +1,9 @@
-from django.conf.urls import url
-from hello import views
+from django.urls import path
+
 from onlineDocumentEdit.views import ListDocumentsView
+from onlineDocumentEdit.views import DocumentsDetailView
 
 urlpatterns = [
-	url(r'documents/$', ListDocumentsView.as_view(), name="documents-all"),
-	url(r'document/(?P<id>[0-9a-zA-Z]+)/$', views.hello)
+	path('documents/', ListDocumentsView.as_view()),
+	path('document/<int:pk>/', DocumentsDetailView.as_view())
 ]

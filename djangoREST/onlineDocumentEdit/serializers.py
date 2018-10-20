@@ -1,8 +1,14 @@
 from rest_framework import serializers
-from .models import  Document
+from .models import Document
 
 
-class DocumentSerializer(serializers.ModelSerializer):
+class DocumentListItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
-        fields = ("title","content","version")
+        fields = ("id", "title", "version")
+
+
+class DocumentDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = '__all__'
