@@ -194,3 +194,4 @@ fabric.properties
 # Dependency directories react
 node_modules/
 jspm_packages/
+djangoREST/onlineDocumentEdit/migrations/0001_initial.py

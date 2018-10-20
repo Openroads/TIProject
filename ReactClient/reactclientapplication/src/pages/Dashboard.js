@@ -21,10 +21,10 @@ class Dashboard extends React.Component
         super(props);
         this.state = 
         {
-            fileName: '',
+            fileTitle: '',
             modal: false,
             documents: [],
-            filecontent: ''
+            fileContent: ''
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -36,10 +36,12 @@ class Dashboard extends React.Component
         this.getDocuments();
     }
 
+    onChangeText
+
     getDocuments()
     {
         //event.preventDefault();
-        axios.get('https://jsonplaceholder.typicode.com/posts')
+        axios.get('http://localhost:8000/online-docs/documents/')
         .then(response => this.setState({documents: response.data}))
     }
 
@@ -50,38 +52,36 @@ class Dashboard extends React.Component
     }
 
     toggle() {
+
+        if(this.state.modal)
+        {
+            this.resetInput();
+        }
+
         this.setState({
           modal: !this.state.modal
         });
     }
 
     resetInput(){
-        document.getElementById("fileName").value = "";
+        document.getElementById("fileTitle").value = "";
+        document.getElementById("fileContent").value = "";
     }
 
     handleSave(){
-        this.state.documents.push({"id": "2", "title": this.state.fileName.toString()});
+        this.state.documents.push({"id": "2", "title": this.state.fileTitle.toString()});
         // Todo: Push to the server
         //this.getDocuments();
         this.toggle();
-        this.resetInput();
     }
 
     documentCallback = (dataFromCallback) => {
-        let title;
-        let content;
+        let title = dataFromCallback.title;
+        let content = dataFromCallback.content;
 
-        for(var i = 0; i < this.state.documents.length; i+=1){
-            if(dataFromCallback.toString() === this.state.documents[i].id.toString())
-            {
-                title = this.state.documents[i].title.toString();
-                content = this.state.documents[i].body.toString();
-            }
-        }
-
-        if(title !== "" && content !== "")
+        if(title !== "" && content !== "" && title != undefined && content != undefined)
         {
-            this.setState({fileName: title, filecontent: content});
+            this.setState({fileTitle: title, fileContent: content});
             this.toggle();
         }
     }
@@ -106,8 +106,8 @@ class Dashboard extends React.Component
                         <h2>
                             <strong>My documents</strong>
                         </h2>
-                                <div class="form-inline">
-                                <input type="text" id="fileName" class="form-control mr-1" placeholder="File name..." value={this.state.documentName} onChange={this.handleChange} />
+                                <div className="form-inline">
+                                <input type="text" id="fileTitle" className="form-control mr-1" placeholder="File name..." value={this.state.documentName} onChange={this.handleChange} />
                                 
                                 <a
                                     className="border nav-link border-light rounded mr-1"
@@ -133,15 +133,15 @@ class Dashboard extends React.Component
                     className="cascading-modal">
                     <div className="modal-header primary-color white-text">
                         <h4 className="title">
-                        {this.state.fileName}
+                        {this.state.fileTitle}
                         </h4>
                         <button type="button" className="close" onClick={this.toggle}>
                         <span aria-hidden="true">×</span>
                         </button>
                     </div>
                     <ModalBody className="grey-text">
-                    <div class="form-group shadow-textarea">
-                        <textarea class="form-control z-depth-1" id="exampleFormControlTextarea6" rows="10" placeholder="Write your content..." value={this.state.filecontent}></textarea>
+                    <div className="form-group shadow-textarea">
+                        <textarea className="form-control z-depth-1" id="fileContent" rows="10" placeholder="Write your content..." value={this.state.fileContent} onChange={this.handleChange}></textarea>
                     </div>
                     </ModalBody>
                     <ModalFooter>
