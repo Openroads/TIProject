@@ -15,6 +15,7 @@ class DocumentList extends React.Component{
         this.handleClick = this.handleClick.bind(this);
         this.resetState = this.resetState.bind(this);
         this.isModifing = this.isModifing.bind(this);
+        this.isDisabled = this.isDisabled.bind(this);
 
     }
 
@@ -45,10 +46,25 @@ class DocumentList extends React.Component{
         }
     }
 
+    isDisabled(doc)
+    {
+        if(doc.name == undefined)
+        {
+            return 'list-group-item list-group-item-action';
+        }
+        if(doc.name.length > 0)
+        {
+            return 'list-group-item list-group-item-action disabled';
+        }
+        else{
+            return 'list-group-item list-group-item-action';
+        }
+    }
+
     render()
     {
         const documentItems = this.props.Documents.map(doc =>
-            <li id={doc.id} onClick={this.handleClick} className="list-group-item list-group-item-action" key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">{doc.name}</i></li>)
+            <li id={doc.id} onClick={this.handleClick} className={this.isDisabled(doc)} key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">{doc.name}</i></li>)
         return(
             <div className="list-group">
                 {documentItems}
