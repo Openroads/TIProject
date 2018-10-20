@@ -8,7 +8,7 @@ class DocumentListItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ("id", "title", "editingBy")
+        fields = ("id", "title", "content", "editingBy")
 
 
 class DocumentDetailsSerializer(serializers.ModelSerializer):
