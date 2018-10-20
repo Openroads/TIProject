@@ -71,10 +71,9 @@ class Dashboard extends React.Component
 
     handleSave(){
 
-        axios.post('https://jsonplaceholder.typicode.com/posts', {
+        axios.post('http://localhost:8000/online-docs/documents/', {
             title: this.state.fileTitle,
-            body: this.state.fileContent,
-            userId: 6969
+            content: this.state.fileContent,
         })
         .then(function (response) {
             console.log(response);
@@ -83,7 +82,10 @@ class Dashboard extends React.Component
             console.log(error);
         });
 
+
+
         this.toggle();
+        this.getDocuments();
     }
 
     documentCallback = (dataFromCallback) => {
