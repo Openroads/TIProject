@@ -17,7 +17,7 @@ def hello(request, name):
         return JsonResponse('Not supported yet', status=404, safe=False)
 
     elif request.method == 'DELETE':
-        snippet.delete()
+        # snippet.delete()
         return JsonResponse('Not supported yet', status=404, safe=False)
 
 def hello2(request, surname):
@@ -31,5 +31,5 @@ def hello2(request, surname):
         return JsonResponse('Not supported yet', status=404, safe=False)
 
     elif request.method == 'DELETE':
-        snippet.delete()
+        # snippet.delete()
         return JsonResponse('Not supported yet', status=404, safe=False)

@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
+from django.http import HttpResponse
 from rest_framework import generics
+from rest_framework.views import APIView
 
 from onlineDocumentEdit.serializers import DocumentListItemSerializer, DocumentDetailsSerializer, UserSerializer
 from .models import Document
@@ -17,6 +19,18 @@ class ListDocumentsView(generics.ListCreateAPIView):
 class DocumentsDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Document.objects.all()
     serializer_class = DocumentDetailsSerializer
+
+
+class DocumentLockView(APIView):
+    def post(self, request, documentId, userId):
+        Document.objects.filter(pk=documentId).update(editingBy=userId)
+        return HttpResponse('')
+
+
+class DocumentUnlockView(APIView):
+    def post(self, request, documentId):
+        Document.objects.filter(pk=documentId).update(editingBy=None)
+        return HttpResponse('')
 
 
 class UserList(generics.ListAPIView):
