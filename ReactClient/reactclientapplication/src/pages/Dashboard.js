@@ -29,8 +29,9 @@ class Dashboard extends React.Component
 
         this.handleChange = this.handleChange.bind(this);
         this.toggle = this.toggle.bind(this);
-        this.handleClick = this.handleClick.bind(this);
+        this.handleSave = this.handleSave.bind(this);
         this.getDocuments = this.getDocuments.bind(this);
+        this.resetInput = this.resetInput.bind(this);
 
         this.getDocuments();
     }
@@ -54,8 +55,16 @@ class Dashboard extends React.Component
         });
     }
 
-    handleClick(){
-        this.state.documents.push({"id": "2", "title": "Dupa"});
+    resetInput(){
+        document.getElementById("fileName").value = "";
+    }
+
+    handleSave(){
+        this.state.documents.push({"id": "2", "title": this.state.fileName.toString()});
+        // Todo: Push to the server
+        //this.getDocuments();
+        this.toggle();
+        this.resetInput();
     }
 
     documentCallback = (dataFromCallback) => {
@@ -65,10 +74,15 @@ class Dashboard extends React.Component
         for(var i = 0; i < this.state.documents.length; i+=1){
             if(dataFromCallback.toString() === this.state.documents[i].id.toString())
             {
-                title = this.state.documents[i].title;
-                content = this.state.documents[i].body;
-                alert(title);
+                title = this.state.documents[i].title.toString();
+                content = this.state.documents[i].body.toString();
             }
+        }
+
+        if(title !== "" && content !== "")
+        {
+            this.setState({fileName: title, filecontent: content});
+            this.toggle();
         }
     }
 
@@ -127,14 +141,14 @@ class Dashboard extends React.Component
                     </div>
                     <ModalBody className="grey-text">
                     <div class="form-group shadow-textarea">
-                        <textarea class="form-control z-depth-1" id="exampleFormControlTextarea6" rows="10" placeholder="Write your content..."></textarea>
+                        <textarea class="form-control z-depth-1" id="exampleFormControlTextarea6" rows="10" placeholder="Write your content..." value={this.state.filecontent}></textarea>
                     </div>
                     </ModalBody>
                     <ModalFooter>
                         <Button color="secondary" onClick={this.toggle}>
                         Close
                         </Button>{" "}
-                        <Button color="primary" onClick={(event) => this.handleClick(event)}>Save</Button>
+                        <Button color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
                     </Modal>
                     </div>
