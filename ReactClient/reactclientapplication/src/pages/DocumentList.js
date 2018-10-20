@@ -33,13 +33,13 @@ class DocumentList extends React.Component{
 
     isModifing(doc)
     {
-        if(doc.name === undefined)
+        if(doc.editingBy == undefined)
         {
             return '';
         }
-        if(doc.name.length > 0)
+        if(doc.editingBy.length > 0)
         {
-            return 'a fa-lock lockList';
+            return 'fa fa-lock lockList';
         }
         else{
             return '';
@@ -48,11 +48,11 @@ class DocumentList extends React.Component{
 
     isDisabled(doc)
     {
-        if(doc.name == undefined)
+        if(doc.editingBy == undefined)
         {
             return 'list-group-item list-group-item-action';
         }
-        if(doc.name.length > 0)
+        if(doc.editingBy.length > 0)
         {
             return 'list-group-item list-group-item-action disabled';
         }
@@ -64,7 +64,7 @@ class DocumentList extends React.Component{
     render()
     {
         const documentItems = this.props.Documents.map(doc =>
-            <li id={doc.id} onClick={this.handleClick} className={this.isDisabled(doc)} key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">{doc.name}</i></li>)
+            <li id={doc.id} onClick={this.handleClick} className={this.isDisabled(doc)} key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i></li>)
         return(
             <div className="list-group">
                 {documentItems}
