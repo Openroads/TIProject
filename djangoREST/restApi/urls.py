@@ -19,5 +19,6 @@ from django.conf.urls import url, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('hello-api/', include('hello.urls'))
+    path('hello-api/', include('hello.urls')),
+    path('docs-edit/', include('onlineDocumentEdit.urls'))
 ]
