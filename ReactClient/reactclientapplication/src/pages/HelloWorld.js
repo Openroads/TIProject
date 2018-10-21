@@ -20,9 +20,10 @@ class HelloWorld extends React.Component {
         };
 
         // Create socket connection
-        this.sock = new SockJS('https://chat-server.azurewebsites.net/chat');
+        // this.sock = new SockJS('https://chat-server.azurewebsites.net/chat');
+        this.socket = new WebSocket('ws://localhost:8000/ws/say-hello/');
 
-        this.sock.onopen = () => {
+ /*       this.sock.onopen = () => {
             console.log('Socket connection opened');
         };
 
@@ -33,6 +34,22 @@ class HelloWorld extends React.Component {
 
         this.sock.onclose = () => {
             console.log('Connection closed');
+        };
+*/
+
+        this.socket.onmessage = function (e) {
+            console.log('Message received: ', e.data);
+            var data = JSON.parse(e.data);
+            console.log(data)
+            var message = data['message'];
+            console.log("Message: " + message + " received")
+            console.log("Stop receiving..")
+
+            alert(message)
+        };
+
+        this.socket.onclose = function (e) {
+            console.error('Chat socket closed unexpectedly');
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -56,7 +73,7 @@ class HelloWorld extends React.Component {
     handleWebSockSubmit(e){
         e.preventDefault();
         let text = this.refs.messageText.value;
-        this.sock.send(text);
+        this.socket.send(text);
     }
 
     render(){
