@@ -36,7 +36,8 @@ class Dashboard extends React.Component
         this.resetInput = this.resetInput.bind(this);
         this.endEditing = this.endEditing.bind(this);
         this.disableViewWhenEditing = this.disableViewWhenEditing.bind(this);
-
+        this.deleteDocument = this.deleteDocument.bind(this);
+        this.canDelete = this.canDelete.bind(this);
         this.getDocuments();
     }
 
@@ -69,6 +70,15 @@ class Dashboard extends React.Component
         });
     }
 
+    canDelete()
+    {
+        if(this.state.isEditedByMe == true){
+            return 'btn btn-danger btn-rounded'
+        }
+
+        return 'btn btn-danger btn-rounded disabled'
+    }
+
     endEditing()
     {
         var domain = "http://localhost:8000/online-docs/document/";
@@ -94,6 +104,36 @@ class Dashboard extends React.Component
         document.getElementById("fileTitle").value = "";
         document.getElementById("fileContent").value = "";
         this.setState({fileContent: '', fileTitle: ''});
+    }
+
+    deleteDocument(event){
+        event.preventDefault();
+        axios.delete(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+                
+                    title: this.state.fileTitle,
+                    content: this.state.fileContent,
+                    version: 1
+                
+            })
+            .then(response => console.log("Deleted: ", response))
+            .catch(function (error) {
+                console.log(error);
+            });
+
+        this.toggle();
+        this.getDocuments();
+
+        var index;
+        for(var i = 0; i < this.state.documents.length; i+=1){
+            if(this.state.documents[i].id == this.state.idEditedDocument)
+            {
+                index = i;
+            }
+        }
+        this.state.documents.slice(index, 1);
+        var element = document.getElementById("myList");
+        var toRemove = document.getElementById(this.state.idEditedDocument);
+        element.removeChild(toRemove);
     }
 
     handleSave(event){
@@ -257,6 +297,9 @@ class Dashboard extends React.Component
                     <ModalFooter>
                         <Button color="secondary" onClick={this.toggle}>
                         Close
+                        </Button>{" "}
+                        <Button className={this.canDelete()} onClick={this.deleteDocument}>
+                        Delete
                         </Button>{" "}
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>

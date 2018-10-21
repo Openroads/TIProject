@@ -10,6 +10,7 @@ class DocumentList extends React.Component{
         this.state = {
             user: '',
             documents: [],
+            documentItems: []
         }
 
         this.handleClick = this.handleClick.bind(this);
@@ -22,6 +23,7 @@ class DocumentList extends React.Component{
 
         axios.get(`http://localhost:8000/online-docs/document/${event.target.id}/`)
         .then(response => this.props.callbackFromParent(response.data))
+        this.render();
     }
 
     componentWillReceiveProps(props) {
@@ -48,13 +50,18 @@ class DocumentList extends React.Component{
         }
     }
 
+
+
     render()
     {
-        let documentItems = this.props.Documents.map(doc =>
-            <li id={doc.id} onClick={this.handleClick} className="list-group-item list-group-item-action" key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i></li>)
+        this.state.documentItems = this.props.Documents.map(doc =>
+            <li id={doc.id} onClick={this.handleClick} className="list-group-item list-group-item-action" key={doc.id}>
+            {doc.title}
+            <i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i>
+            </li>)
         return(
-            <div className="list-group">
-                {documentItems}
+            <div id="myList" className="list-group">
+                {this.state.documentItems}
             </div>
         );
     }
