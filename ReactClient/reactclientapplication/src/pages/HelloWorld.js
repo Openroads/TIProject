@@ -37,7 +37,7 @@ class HelloWorld extends React.Component {
         };
 */
 
-        this.socket.onmessage = function (e) {
+        this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
             var data = JSON.parse(e.data);
             console.log(data)
@@ -45,7 +45,8 @@ class HelloWorld extends React.Component {
             console.log("Message: " + message + " received")
             console.log("Stop receiving..")
 
-            alert(message)
+            this.setState({messages: [...this.state.messages, message]});
+            //alert(message)
         };
 
         this.socket.onclose = function (e) {
@@ -116,6 +117,8 @@ class HelloWorld extends React.Component {
                                 <input type="submit" className="btn btn-primary" value="Submit" />
                             </form>
                         </div>
+                        </Row>
+                        <Row>
                         <div>
                             <h3>Messages</h3>
                             <hr />
@@ -125,7 +128,6 @@ class HelloWorld extends React.Component {
                                 })}
                             </ul>
                         </div>
-
                         </Row>
                         </CardBody>
                     </Col>  
