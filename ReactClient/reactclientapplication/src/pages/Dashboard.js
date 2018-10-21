@@ -24,7 +24,9 @@ class Dashboard extends React.Component
             fileTitle: '',
             modal: false,
             documents: [],
-            fileContent: ''
+            fileContent: '',
+            idEditedDocument: '',
+            editingBy: ''
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -32,15 +34,14 @@ class Dashboard extends React.Component
         this.handleSave = this.handleSave.bind(this);
         this.getDocuments = this.getDocuments.bind(this);
         this.resetInput = this.resetInput.bind(this);
+        this.endEditing = this.endEditing.bind(this);
+        this.disableViewWhenEditing = this.disableViewWhenEditing.bind(this);
 
         this.getDocuments();
     }
 
-    onChangeText
-
     getDocuments()
     {
-        //event.preventDefault();
         axios.get('http://localhost:8000/online-docs/documents/')
         .then(response => this.setState({documents: response.data}))
     }
@@ -55,12 +56,38 @@ class Dashboard extends React.Component
 
         if(this.state.modal)
         {
+            if(this.state.isEditedByMe == true){
+                this.endEditing();
+            }
+            
             this.resetInput();
+            
         }
 
         this.setState({
           modal: !this.state.modal
         });
+    }
+
+    endEditing()
+    {
+        var domain = "http://localhost:8000/online-docs/document/";
+        var id = this.state.idEditedDocument.toString();
+        var endOf = "/stop-editing/";
+        var address = domain.concat(id, endOf);
+        axios.post(address, {
+                })
+                .then(response => console.log("End editing: ", response))
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+        this.setState({isEditedByMe: false});
+    }
+
+    handleCreation(event){
+        
+        
     }
 
     resetInput(){
@@ -69,33 +96,103 @@ class Dashboard extends React.Component
         this.setState({fileContent: '', fileTitle: ''});
     }
 
-    handleSave(){
+    handleSave(event){
 
-        axios.post('http://localhost:8000/online-docs/documents/', {
-            title: this.state.fileTitle,
-            content: this.state.fileContent,
-        })
-        .then(function (response) {
-            console.log(response);
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+        event.preventDefault();
 
+        if(this.state.isEditedByMe == undefined || this.state.editingBy == undefined || this.state.isEditedByMe == false)
+        {
+            axios.post('http://localhost:8000/online-docs/documents/', {
+                title: this.state.fileTitle,
+                content: this.state.fileContent,
+            })
+            .then(response => this.setState({documents: [...this.state.documents, response.data]}))
+            .catch(function (error) {
+                console.log(error);
+            });   
+            
+            
+        }
+        else{
+            axios.put(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+                
+                    title: this.state.fileTitle,
+                    content: this.state.fileContent,
+                    version: 1
+                
+            })
+            .then(response => console.log("Updated: ", response))
+            .catch(function (error) {
+                console.log(error);
+            });
 
+/*
+            const formData = new FormData();
+            formData.append('title', this.state.fileTitle);
+            formData.append('content', this.state.fileContent);
+
+            fetch(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+                method: 'PUT',
+                body: formData,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                }).then(res => {
+                    console.log("Put: ", res.json())
+                }).catch(err => err);
+            }
+            */
+        }
+
+        //this.getDocuments();
 
         this.toggle();
-        this.getDocuments();
+        
+    }
+
+    disableViewWhenEditing(){
+        var textArea = document.getElementById("fileContent");
+        var saveButton = document.getElementById("saveButton");
+
+        if(this.state.editingBy != ""){
+            textArea.disabled = true;
+            saveButton.disabled = true;
+
+        }
+        else{
+            textArea.disabled = false;
+            saveButton.disabled = false;
+        }
     }
 
     documentCallback = (dataFromCallback) => {
         let title = dataFromCallback.title;
         let content = dataFromCallback.content;
+        let id = dataFromCallback.id;
+        let editingby = dataFromCallback.editingBy;
 
-        if(title !== "" && content !== "" && title !== undefined && content !== undefined)
+        // Callback when clickin position on the list
+        if(title !== "" && content !== "" && title !== undefined && content !== undefined && id != "")
         {
-            this.setState({fileTitle: title, fileContent: content});
-            this.toggle();
+            if(editingby == undefined || editingby == ""){
+                axios.post(`http://localhost:8000/online-docs/document/${id}`+ '/editing-by/1/', {
+                })
+                .then(response => console.log("Editing: ", response))
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+                this.setState({fileTitle: title, fileContent: content, idEditedDocument: id, isEditedByMe: true});
+                this.toggle();
+            }
+            else{
+                this.setState({fileTitle: title, fileContent: content, editingBy: editingby});
+                this.toggle();
+                this.disableViewWhenEditing();
+            }
+            
+            
+            
         }
     }
 
@@ -124,7 +221,7 @@ class Dashboard extends React.Component
                                 
                                 <a
                                     className="border nav-link border-light rounded mr-1"
-                                    onClick={this.toggle}
+                                    onClick={this.toggle} //Todo : handle creation
                                     target="_blank"
                                     rel="noopener noreferrer">
                                         <Fa icon="pencil" className="mr-2" />
@@ -161,7 +258,7 @@ class Dashboard extends React.Component
                         <Button color="secondary" onClick={this.toggle}>
                         Close
                         </Button>{" "}
-                        <Button color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
+                        <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
                     </Modal>
                     </div>

@@ -15,8 +15,6 @@ class DocumentList extends React.Component{
         this.handleClick = this.handleClick.bind(this);
         this.resetState = this.resetState.bind(this);
         this.isModifing = this.isModifing.bind(this);
-        this.isDisabled = this.isDisabled.bind(this);
-
     }
 
     handleClick(event){
@@ -24,6 +22,10 @@ class DocumentList extends React.Component{
 
         axios.get(`http://localhost:8000/online-docs/document/${event.target.id}/`)
         .then(response => this.props.callbackFromParent(response.data))
+    }
+
+    componentWillReceiveProps(props) {
+        console.log("received new property: ", props.Documents.length);
     }
 
     resetState()
@@ -46,25 +48,10 @@ class DocumentList extends React.Component{
         }
     }
 
-    isDisabled(doc)
-    {
-        if(doc.editingBy == undefined)
-        {
-            return 'list-group-item list-group-item-action';
-        }
-        if(doc.editingBy.length > 0)
-        {
-            return 'list-group-item list-group-item-action disabled';
-        }
-        else{
-            return 'list-group-item list-group-item-action';
-        }
-    }
-
     render()
     {
-        const documentItems = this.props.Documents.map(doc =>
-            <li id={doc.id} onClick={this.handleClick} className={this.isDisabled(doc)} key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i></li>)
+        let documentItems = this.props.Documents.map(doc =>
+            <li id={doc.id} onClick={this.handleClick} className="list-group-item list-group-item-action" key={doc.id}>{doc.title}<i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i></li>)
         return(
             <div className="list-group">
                 {documentItems}
