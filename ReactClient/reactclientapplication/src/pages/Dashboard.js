@@ -26,7 +26,8 @@ class Dashboard extends React.Component
             documents: [],
             fileContent: '',
             idEditedDocument: '',
-            editingBy: ''
+            editingBy: '',
+            editingDocument: ''
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -38,13 +39,14 @@ class Dashboard extends React.Component
         this.disableViewWhenEditing = this.disableViewWhenEditing.bind(this);
         this.deleteDocument = this.deleteDocument.bind(this);
         this.canDelete = this.canDelete.bind(this);
+        this.handleDocumentClick = this.handleDocumentClick.bind(this);
         this.getDocuments();
     }
 
-    getDocuments()
+    async getDocuments()
     {
-        axios.get('http://localhost:8000/online-docs/documents/')
-        .then(response => this.setState({documents: response.data}))
+        const response = await axios.get('http://localhost:8000/online-docs/documents/');
+        this.setState({documents: response.data})
     }
 
     handleChange = event => {
@@ -79,25 +81,18 @@ class Dashboard extends React.Component
         return 'btn btn-danger btn-rounded disabled'
     }
 
-    endEditing()
+    async endEditing()
     {
         var domain = "http://localhost:8000/online-docs/document/";
         var id = this.state.idEditedDocument.toString();
         var endOf = "/stop-editing/";
         var address = domain.concat(id, endOf);
-        axios.post(address, {
-                })
-                .then(response => console.log("End editing: ", response))
-                .catch(function (error) {
-                    console.log(error);
+        const response = await axios.post(address, {
+            headers: {'Content-Type': 'application/x-www-form-urlencoded' }
                 });
+        console.log("End editing: ", response);
 
         this.setState({isEditedByMe: false});
-    }
-
-    handleCreation(event){
-        
-        
     }
 
     resetInput(){
@@ -106,37 +101,31 @@ class Dashboard extends React.Component
         this.setState({fileContent: '', fileTitle: ''});
     }
 
-    deleteDocument(event){
+    async deleteDocument(event){
         event.preventDefault();
-        axios.delete(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+        const response = await axios.delete(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
                 
                     title: this.state.fileTitle,
                     content: this.state.fileContent,
-                    version: 1
+                    version: 1,
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded' }
                 
-            })
-            .then(response => console.log("Deleted: ", response))
-            .catch(function (error) {
-                console.log(error);
             });
+        console.log("Deleted: ", response);
+
+        
+
+        // removing from the list
+        const newState = this.state;
+        const deletedIndex = newState.documents.findIndex(x => x.id == newState.idEditedDocument);
+        if(deletedIndex == -1) return;
+        newState.documents.splice(deletedIndex, 1);
+        this.setState(newState);
 
         this.toggle();
-        this.getDocuments();
-
-        var index;
-        for(var i = 0; i < this.state.documents.length; i+=1){
-            if(this.state.documents[i].id == this.state.idEditedDocument)
-            {
-                index = i;
-            }
-        }
-        this.state.documents.slice(index, 1);
-        var element = document.getElementById("myList");
-        var toRemove = document.getElementById(this.state.idEditedDocument);
-        element.removeChild(toRemove);
     }
 
-    handleSave(event){
+    async handleSave(event){
 
         event.preventDefault();
 
@@ -154,37 +143,22 @@ class Dashboard extends React.Component
             
         }
         else{
-            axios.put(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+           const response = await axios.put(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
                 
                     title: this.state.fileTitle,
                     content: this.state.fileContent,
-                    version: 1
-                
-            })
-            .then(response => console.log("Updated: ", response))
-            .catch(function (error) {
-                console.log(error);
+                    version: 1,
             });
 
-/*
-            const formData = new FormData();
-            formData.append('title', this.state.fileTitle);
-            formData.append('content', this.state.fileContent);
+           console.log("Updated: ", response);
+           
+           const newState = this.state;
+           axios.get('http://localhost:8000/online-docs/documents/')
+            .then(response => {newState.documents = response.data})
 
-            fetch(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
-                method: 'PUT',
-                body: formData,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-                }).then(res => {
-                    console.log("Put: ", res.json())
-                }).catch(err => err);
-            }
-            */
+            
+            this.setState(newState);
         }
-
-        //this.getDocuments();
 
         this.toggle();
         
@@ -216,6 +190,7 @@ class Dashboard extends React.Component
         {
             if(editingby == undefined || editingby == ""){
                 axios.post(`http://localhost:8000/online-docs/document/${id}`+ '/editing-by/1/', {
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded' }
                 })
                 .then(response => console.log("Editing: ", response))
                 .catch(function (error) {
@@ -231,8 +206,58 @@ class Dashboard extends React.Component
                 this.disableViewWhenEditing();
             }
             
+        }
+    }
+
+    async handleDocumentClick(event) {
+
+        event.preventDefault();
+        var respondedData;
+        const response = await axios.get(`http://localhost:8000/online-docs/document/${event.target.id}/`);
+        this.setState({editingDocument: response.data});
+        
+        let title = this.state.editingDocument.title;
+        let content = this.state.editingDocument.content;
+        let id = this.state.editingDocument.id;
+        let editingby = this.state.editingDocument.editingBy;
+
+        // Callback when clickin position on the list
+        if(title !== "" && content !== "" && title !== undefined && content !== undefined && id != "")
+        {
+            if(editingby == undefined || editingby == ""){
+                const editResponse = await axios.post(`http://localhost:8000/online-docs/document/${id}`+ '/editing-by/1/', {
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded' }
+                });
+
+                console.log("Editing: ", editResponse.data)
+
+                this.setState({fileTitle: title, fileContent: content, idEditedDocument: id, isEditedByMe: true});
+                this.toggle();
+            }
+            else{
+                this.toggle();
+                this.setState({fileTitle: title, fileContent: content, editingBy: editingby});
+                
+                this.disableViewWhenEditing();
+            }
             
             
+            
+        }
+    }
+
+    isModifing(doc)
+    {
+        if(doc.editingBy == undefined)
+        {
+            return '';
+        }
+        if(doc.editingBy.length > 0)
+        {
+            return 'fa fa-lock lockList';
+        }
+        else{
+            return '';
         }
     }
 
@@ -269,7 +294,17 @@ class Dashboard extends React.Component
                                 </a>
                                 </div>
                                 <div className="documentList">
-                                    <DocumentList Documents={this.state.documents} callbackFromParent={this.documentCallback}/>
+                                {
+                                    this.state.documents.map(doc => {
+                                        return(
+                                            <li id={doc.id} onClick={this.handleDocumentClick} className="list-group-item list-group-item-action" key={doc.id}>
+                                        {doc.title}
+                                        <i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i>
+                                        </li>
+                                        );
+                                    })
+                                }
+                                 
                                 </div>
                         </div>
                         </Row>

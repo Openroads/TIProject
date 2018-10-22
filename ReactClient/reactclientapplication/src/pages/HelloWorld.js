@@ -19,23 +19,7 @@ class HelloWorld extends React.Component {
             messages: []
         };
 
-        // Create socket connection
-        // this.sock = new SockJS('https://chat-server.azurewebsites.net/chat');
         this.socket = new WebSocket('ws://localhost:8000/ws/say-hello/');
-
- /*       this.sock.onopen = () => {
-            console.log('Socket connection opened');
-        };
-
-        this.sock.onmessage = e => {
-            console.log('Message received: ', e.data);
-            this.setState({messages: [...this.state.messages, e.data]});
-        };
-
-        this.sock.onclose = () => {
-            console.log('Connection closed');
-        };
-*/
 
         this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
@@ -75,6 +59,7 @@ class HelloWorld extends React.Component {
         e.preventDefault();
         let text = this.refs.messageText.value;
         this.socket.send(text);
+        document.getElementById("socketInput").value = "";
     }
 
     render(){
@@ -112,7 +97,7 @@ class HelloWorld extends React.Component {
                         <div>
                             <form onSubmit={this.handleWebSockSubmit}>
                                 <div className="form-group">
-                                <input type="text" ref="messageText" className="form-control" placeholder="Type your message..." />
+                                <input type="text" id="socketInput" ref="messageText" className="form-control" placeholder="Type your message..." />
                                 </div>
                                 <input type="submit" className="btn btn-primary" value="Submit" />
                             </form>
