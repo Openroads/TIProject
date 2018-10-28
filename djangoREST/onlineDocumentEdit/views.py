@@ -1,6 +1,11 @@
+import json
+
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.views import View
 from rest_framework import generics
+from rest_framework.renderers import JSONRenderer
 from rest_framework.views import APIView
 
 from onlineDocumentEdit.serializers import DocumentListItemSerializer, DocumentDetailsSerializer, UserSerializer
@@ -41,3 +46,13 @@ class UserList(generics.ListAPIView):
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+class UserLogin(View):
+
+    def post(self, request):
+        json_user = json.loads(request.body)
+        user = authenticate(username=json_user['username'],password=json_user['password'])
+        serializer = UserSerializer(user).data
+        user_json = JSONRenderer().render(serializer)
+        return HttpResponse(user_json)
