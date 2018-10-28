@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
+import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
 
 
@@ -17,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        //val user = intent.getSerializableExtra(LoginActivity.USER_DATA) as User
 
         API_button.setOnClickListener {
             val url = Constants.REST_SERVERS_ADDRESS + "online-docs/documents/"
