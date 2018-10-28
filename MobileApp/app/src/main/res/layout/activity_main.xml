@@ -9,33 +9,24 @@
 
     <Button
             android:text="API"
-            android:layout_width="351dp"
-            android:layout_height="51dp" android:id="@+id/API_button"
+            android:layout_width="203dp"
+            android:layout_height="34dp" android:id="@+id/API_button"
             android:background="#4682B4"
             app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="95dp"
-            android:layout_marginTop="12dp" app:layout_constraintTop_toBottomOf="@+id/nameText"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="86dp" app:layout_constraintHorizontal_bias="0.552"
-            tools:fontFamily="sans-serif-condensed" android:textSize="18sp"/>
+            android:layout_marginEnd="86dp" app:layout_constraintHorizontal_bias="0.0"
+            tools:fontFamily="sans-serif-condensed" android:textSize="18sp" android:layout_marginBottom="28dp"
+            app:layout_constraintBottom_toTopOf="@+id/docListView" app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="32dp"/>
 
-    <EditText
-            android:layout_width="352dp"
-            android:layout_height="59dp"
-            android:inputType="textPersonName"
-            android:ems="10"
-            android:id="@+id/nameText"
-            android:hint="Wpisz swoje imie"
-            app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp" app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="16dp" android:layout_marginBottom="12dp"
-            app:layout_constraintBottom_toTopOf="@+id/API_button" tools:textSize="18sp"/>
     <ListView
-            android:id="@+id/docList"
-            android:layout_width="305dp"
-            android:layout_height="318dp" android:layout_marginTop="172dp"
-            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="38dp" app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="41dp" android:layout_marginBottom="21dp"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            android:id="@+id/docListView"
+            android:layout_width="352dp"
+            android:layout_height="377dp"
+            android:layout_marginTop="28dp"
+            app:layout_constraintTop_toBottomOf="@+id/API_button" app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="16dp" app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="72dp" app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginEnd="16dp" app:layout_constraintHorizontal_bias="0.0"/>
 
 </android.support.constraint.ConstraintLayout>
