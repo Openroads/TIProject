@@ -43,9 +43,42 @@
 }
 
 .documentList {
-	margin-top: 100px;
+	margin-top: 50px;
+	width: 100%;
 }
 
 .lockList {
 	float: right;
+}
+
+.roundedImage{
+	border-radius: 50%;
+}
+
+.toRight{
+	float: right;
+}
+
+.toLeft{
+	float: left;
+}
+
+.avatar{
+	width: 100px;
+}
+
+.clearBoh{
+	clear: both;
+}
+
+.inline{
+	display: inline;
+}
+
+.text-center{
+	text-align: center;
+}
+
+.listWidth{
+	width: 50%;
 }

@@ -26,12 +26,14 @@ class HomePage extends React.Component {
       password: "",
       name: "",
       surname: "",
-      user: []
+      user: [],
+      errorMessage: ''
     };
 
     this.toggle = this.toggle.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.showError = this.showError.bind(this);
   }
 
   toggle() {
@@ -46,12 +48,15 @@ class HomePage extends React.Component {
     });
 }
 
+setStateAsync(state) {
+  return new Promise((resolve) => {
+    this.setState(state, resolve)
+  });
+}
+
   async handleClick(event){
-
-    var self = this;
-    
-
-    //event.preventDefault();
+  
+    event.preventDefault();
     var response = await axios.post("http://localhost:8000/online-docs/users/login/", {
       username: this.state.username,
       password: this.state.password
@@ -69,6 +74,15 @@ class HomePage extends React.Component {
         }
       )
     }
+    else
+    {
+      this.showError();
+    }
+  }
+
+  showError()
+  {
+    document.getElementById('errorMessage').textContent = 'Incorrect username or password!';
   }
 
   render() {
@@ -135,6 +149,7 @@ class HomePage extends React.Component {
                   id="password"
                   onChange = {this.handleChange}
                 />
+                <label id="errorMessage" className="text-danger"></label>
               </ModalBody>
               <ModalFooter>
                 <Button color="secondary" onClick={this.toggle}>

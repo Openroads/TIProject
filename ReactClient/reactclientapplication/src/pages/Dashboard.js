@@ -13,6 +13,7 @@ import {
   } from "mdbreact";
 import DocumentList from './DocumentList';
 import axios from 'axios';
+import avatar from '../Images/img_avatar.png';
 
 class Dashboard extends React.Component 
 {
@@ -273,42 +274,55 @@ class Dashboard extends React.Component
                     <Row>
                     <Col md="10" className="mx-auto float-none white z-depth-1 py-2 px-2">
                         <CardBody>
-                        
                         <Row>
+                            <div className="container">
+                                <div className="row">
+                                    <div className="float-right">
+                                        <img className="avatar rounded-circle" src={avatar} />
+                                        <div className="text-center" ><h4>{this.state.userName}</h4></div>
+                                    </div>
 
-                        <div>
-                        <h2>
-                            <strong>Logged in as: {this.state.userName} - My documents</strong>
-                        </h2>
-                                <div className="form-inline">
-                                <input type="text" id="fileTitle" className="form-control mr-1" placeholder="File name..." value={this.state.documentName} onChange={this.handleChange} />
-                                
-                                <a
-                                    className="border nav-link border-light rounded mr-1"
-                                    onClick={this.toggle} //Todo : handle creation
-                                    target="_blank"
-                                    rel="noopener noreferrer">
-                                        <Fa icon="pencil" className="mr-2" />
-                                        Create new
-                                </a>
                                 </div>
-                                <div className="documentList">
-                                {
-                                    this.state.documents.map(doc => {
-                                        return(
-                                            <li id={doc.id} onClick={this.handleDocumentClick} className="list-group-item list-group-item-action" key={doc.id}>
-                                        {doc.title}
-                                        <i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i>
-                                        </li>
-                                        );
-                                    })
-                                }
-                                 
+                                <div className="row">
+                                    <h2>
+                                        <strong>My documents</strong>
+                                    </h2>
                                 </div>
-                        </div>
+                                <div className="row">
+                                    <div className="form-inline">
+                                        <input type="text" id="fileTitle" className="form-control mr-1" placeholder="File name..." value={this.state.documentName} onChange={this.handleChange} />
+                                    
+                                        <a
+                                            className="border nav-link border-light rounded mr-1"
+                                            onClick={this.toggle}
+                                            target="_blank"
+                                            rel="noopener noreferrer">
+                                                <Fa icon="pencil" className="mr-2" />
+                                                Create new
+                                        </a>
+                                    </div>
+                                    </div>
+                                    <div className="row">
+
+                                        <div className="documentList">
+                                        {
+                                            this.state.documents.map(doc => {
+                                            return(
+                                                <li id={doc.id} onClick={this.handleDocumentClick} className="list-group-item list-group-item-action listWidth" key={doc.id}>
+                                                {doc.title}
+                                                <i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i>
+                                                </li>
+                                                );
+                                            })
+                                        }
+                                        </div>
+                                </div>
+
+                            </div>
+                       
                         </Row>
                         </CardBody>
-                    </Col>  
+                    </Col>
                     </Row>
                 </FreeBird>
                 <Modal
@@ -338,7 +352,7 @@ class Dashboard extends React.Component
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
                     </Modal>
-                    </div>
+                </div>
         );
     }
 }
