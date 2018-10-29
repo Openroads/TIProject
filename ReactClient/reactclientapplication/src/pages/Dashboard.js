@@ -27,7 +27,9 @@ class Dashboard extends React.Component
             fileContent: '',
             idEditedDocument: '',
             editingBy: '',
-            editingDocument: ''
+            editingDocument: '',
+            userName: sessionStorage.getItem('username'),
+            userId: sessionStorage.getItem('userId')
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -267,9 +269,6 @@ class Dashboard extends React.Component
         return(
             <div>
                 <EdgeHeader color="indigo darken-3" />
-                <div>
-                    <h3>{this.state.userName}</h3>
-                </div>
                 <FreeBird>
                     <Row>
                     <Col md="10" className="mx-auto float-none white z-depth-1 py-2 px-2">
@@ -279,7 +278,7 @@ class Dashboard extends React.Component
 
                         <div>
                         <h2>
-                            <strong>My documents</strong>
+                            <strong>Logged in as: {this.state.userName} - My documents</strong>
                         </h2>
                                 <div className="form-inline">
                                 <input type="text" id="fileTitle" className="form-control mr-1" placeholder="File name..." value={this.state.documentName} onChange={this.handleChange} />

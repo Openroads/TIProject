@@ -46,26 +46,26 @@ class HomePage extends React.Component {
     });
 }
 
-  handleClick(event){
+  async handleClick(event){
 
     var self = this;
     
 
     //event.preventDefault();
-    axios.get(`https://localhost:44322/api/Login/${this.state.username}/${this.state.password}`)
-    .then(response => 
-      {
-        self.setState({user: response.data, name: response.data.name, surname: response.data.surname});
-      })
-
-    alert(this.state.user);
+    var response = await axios.post("http://localhost:8000/online-docs/users/login/", {
+      username: this.state.username,
+      password: this.state.password
+    })
     
-    if(this.state.name !== "" && this.state.surname !== "")
+    var userName = response.data.username;
+    var id = response.data.id;
+    if(userName != undefined && userName != "")
     {
+      sessionStorage.setItem('userId', id);
+      sessionStorage.setItem('username', userName);
       this.props.history.push(
         {
-          pathname: '/Dashboard',
-          state: {user: this.state.username}
+          pathname: '/Dashboard'
         }
       )
     }

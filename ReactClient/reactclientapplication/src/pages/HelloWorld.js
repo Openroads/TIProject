@@ -19,6 +19,7 @@ class HelloWorld extends React.Component {
             messages: []
         };
 
+        // Create socket connection
         this.socket = new WebSocket('ws://localhost:8000/ws/say-hello/');
 
         this.socket.onmessage = e => {
@@ -59,7 +60,6 @@ class HelloWorld extends React.Component {
         e.preventDefault();
         let text = this.refs.messageText.value;
         this.socket.send(text);
-        document.getElementById("socketInput").value = "";
     }
 
     render(){
@@ -97,7 +97,7 @@ class HelloWorld extends React.Component {
                         <div>
                             <form onSubmit={this.handleWebSockSubmit}>
                                 <div className="form-group">
-                                <input type="text" id="socketInput" ref="messageText" className="form-control" placeholder="Type your message..." />
+                                <input type="text" ref="messageText" className="form-control" placeholder="Type your message..." />
                                 </div>
                                 <input type="submit" className="btn btn-primary" value="Submit" />
                             </form>

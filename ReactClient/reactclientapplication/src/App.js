@@ -24,7 +24,28 @@ class App extends Component {
       userName: "",
       surname: ""
     };
+
+    this.showWhenLoggedIn = this.showWhenLoggedIn.bind(this);
   }
+
+  showWhenLoggedIn(){
+    var userName = sessionStorage.getItem('username');
+    if(userName != undefined && userName != "")
+    {
+      return(
+        <NavItem>
+                <NavLink
+                  exact
+                  to="/Dashboard"
+                  onClick={this.closeCollapse("mainNavbarCollapse")}
+                >
+                  Dashboard
+                </NavLink>
+              </NavItem>);
+      }
+
+      return "";
+    }
 
   toggleCollapse = collapseID => () =>
     this.setState(prevState => ({
@@ -71,15 +92,7 @@ class App extends Component {
                     Home
                   </NavLink>
                 </NavItem>
-                <NavItem>
-                  <NavLink
-                    exact
-                    to="/Dashboard"
-                    onClick={this.closeCollapse("mainNavbarCollapse")}
-                  >
-                    Dashboard
-                  </NavLink>
-                </NavItem>
+                <this.showWhenLoggedIn />
                 <NavItem>
                   <NavLink
                     exact
