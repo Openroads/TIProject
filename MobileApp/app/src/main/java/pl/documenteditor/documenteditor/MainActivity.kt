@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
 
                 return lDok
             } catch (ex: Exception) {
-                Log.e("DOC-EDITOR", "Cant get data from rest api server", ex)
+                Log.e(TAG, "Cant get data from rest api server", ex)
             }
 
             return emptyList()
@@ -53,6 +53,10 @@ class MainActivity : AppCompatActivity() {
             val adapter = DocumentListAdapter(this@MainActivity, result!!)
             docListView.adapter = adapter
         }
+    }
+
+    companion object {
+        const val  TAG :String = "ODE_MainActivity" // ODE - online document editor
     }
 }
 
