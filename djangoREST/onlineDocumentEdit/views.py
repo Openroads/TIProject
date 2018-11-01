@@ -52,6 +52,7 @@ class UserLogin(View):
 
     def post(self, request):
         json_user = json.loads(request.body)
+        print(json_user)
         user = authenticate(username=json_user['username'],password=json_user['password'])
         serializer = UserSerializer(user).data
         user_json = JSONRenderer().render(serializer)
