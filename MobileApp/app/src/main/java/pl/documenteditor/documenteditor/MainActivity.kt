@@ -1,5 +1,6 @@
 package pl.documenteditor.documenteditor
 
+import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.NavigationView
@@ -24,7 +25,7 @@ import pl.documenteditor.documenteditor.utils.Constants
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
-    private var user:User? = User(username = "John",password = "pass")
+    private var user: User? = User(username = "John", password = "pass")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,6 +79,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             val adapter = DocumentListAdapter(this@MainActivity, result!!)
             docListView.adapter = adapter
+
+            docListView.setOnItemClickListener { parent, view, position, id ->
+                val selectedDocument = result[position]
+
+                val intentDocumentEditing = Intent(this@MainActivity, DocumentEditingActivity::class.java)
+
+                intentDocumentEditing.putExtra(DOCUMENT_DATA, selectedDocument)
+
+                startActivity(intentDocumentEditing)
+            }
         }
     }
 
@@ -137,7 +148,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
     companion object {
-        const val  TAG :String = "ODE_MainActivity" // ODE - online document editor
+        const val TAG: String = "ODE_MainActivity" // ODE - online document editor
+        const val DOCUMENT_DATA = "document_data_object"
     }
 
 }
