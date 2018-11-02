@@ -8,11 +8,13 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
+import kotlinx.android.synthetic.main.row_layout.*
 import okhttp3.*
 import okio.ByteString
 import pl.documenteditor.documenteditor.adapters.MessageAdapter
 import pl.documenteditor.documenteditor.model.Document
 import pl.documenteditor.documenteditor.model.Message
+import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
 
 
@@ -20,6 +22,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
 
     private var document: Document? = null
+    private var user: User? = User(username = "John", password = "pass")
 
     private var client: OkHttpClient = OkHttpClient()
 
@@ -32,11 +35,13 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         // this is the document selected from list view
         document = intent.getSerializableExtra(MainActivity.DOCUMENT_DATA) as? Document
+        user = intent.getSerializableExtra(LoginActivity.USER_DATA) as? User ?: user
 
         Log.i(TAG, "Document object selected on user list: " + document.toString())
         val id: Int = document!!.id
         val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
-        GetDocumentDetailsTask().execute(url)
+        val url2= Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + id + "/editing-by/"+user?.id+"/"
+        GetDocumentDetailsTask().execute(url, url2)
 
         adapter = MessageAdapter(this)
         messages_view.adapter = adapter
@@ -63,6 +68,11 @@ class DocumentEditingActivity : AppCompatActivity() {
             super.onBackPressed()
         }
 
+    }
+
+    override fun onBackPressed() {
+
+        super.onBackPressed()
     }
 
     companion object {
@@ -167,14 +177,25 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     inner class GetDocumentDetailsTask : AsyncTask<String, String, Document>() {
 
-        override fun doInBackground(vararg url: String?): Document? {
+        override fun doInBackground(vararg url: String?) : Document? {
 
             try {
+                val gson = Gson()
+                val toJson = gson.toJson(user)
+                println("*****USER: "+toJson)
+                val requestBlock = Request.Builder()
+                    .url(url[1])
+                    .post(RequestBody.create(Constants.JSON, toJson))
+                    .build()
+                val response2 = OkHttpClient().newCall(requestBlock).execute()
+                println("*****Response: "+response2)
+                if (response2.isSuccessful) {
+
                 val request = Request.Builder().url(url[0]).build()
                 val response = OkHttpClient().newCall(request).execute()
                 val string = response.body()?.string()
                 return GsonBuilder().create().fromJson(string, Document::class.java)
-            } catch (ex: Exception) {
+            }} catch (ex: Exception) {
                 Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
             }
             return null
