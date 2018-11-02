@@ -43,7 +43,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private var mAuthTask: UserLoginTask? = null
-    val JSON = MediaType.parse("application/json; charset=utf-8")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -265,7 +264,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 val gson = Gson()
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/users/login/")
-                    .post(RequestBody.create(JSON, gson.toJson(user)))
+                    .post(RequestBody.create(Constants.JSON, gson.toJson(user)))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
 

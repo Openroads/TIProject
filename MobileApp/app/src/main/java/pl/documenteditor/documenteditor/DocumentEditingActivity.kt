@@ -16,7 +16,7 @@ import pl.documenteditor.documenteditor.utils.Constants
 
 
 class DocumentEditingActivity : AppCompatActivity() {
-    val JSON = MediaType.parse("application/json; charset=utf-8")
+
 
     private var document: Document? = null
 
@@ -56,11 +56,14 @@ class DocumentEditingActivity : AppCompatActivity() {
         }
         buttonCancel.setOnClickListener {
             super.onBackPressed()
+            //ktoś przestał to edytować w onBackPressed.
+            //ustaw editingby jako null
+
 
         }
         buttonDel.setOnClickListener {
             DeleteDocumentTask().execute()
-            this.finish()
+            super.onBackPressed()
         }
 
         buttonSave.setOnClickListener {
@@ -128,7 +131,7 @@ class DocumentEditingActivity : AppCompatActivity() {
                 }
 
             } catch (ex: Exception) {
-                Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
+                Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
             return false
 
@@ -181,9 +184,17 @@ class DocumentEditingActivity : AppCompatActivity() {
         override fun doInBackground(vararg url: String?): Document? {
 
             try {
+                //najpierw blokada
                 val request = Request.Builder().url(url[0]).build()
                 val response = OkHttpClient().newCall(request).execute()
+                //sprawdzic czy jest ok isSuccesful?
+                //kolejny request z url editing by i podac id tego usera
+                //id usera trzeba tutaj przeslac intentem mainactivity, a tam user jest tak samo jak dokument
+// parametr 1 drugi url
+
+
                 val string = response.body()?.string()
+                //Log a nie print Log.e-> error, i->info, d->debug
                 println(string)
 
                 return GsonBuilder().create().fromJson(string, Document::class.java)
