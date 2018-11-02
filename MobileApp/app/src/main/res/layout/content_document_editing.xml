@@ -68,6 +68,7 @@
             android:id="@+id/messages_view"
             android:layout_weight="2"
             android:divider="#fff"
+            android:dividerHeight="1.0sp"
             android:layout_height="109dp"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"
             android:layout_marginTop="354dp" app:layout_constraintEnd_toEndOf="parent"
