@@ -1,15 +1,12 @@
 package pl.documenteditor.documenteditor
 
-import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
-import kotlinx.android.synthetic.main.content_document_editing.view.*
 import okhttp3.*
 import okio.ByteString
 import pl.documenteditor.documenteditor.adapters.MessageAdapter
@@ -36,9 +33,9 @@ class DocumentEditingActivity : AppCompatActivity() {
         document = intent.getSerializableExtra(MainActivity.DOCUMENT_DATA) as? Document
 
         Log.i(TAG, "Document object selected on user list: " + document.toString())
-        val id : Int = document!!.id
-        val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/"+id
-        AsyncTaskHandleRestApi().execute(url)
+        val id: Int = document!!.id
+        val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
+        GetDocumentDetailsTask().execute(url)
 
         adapter = MessageAdapter(this)
         messages_view.adapter = adapter
@@ -61,10 +58,10 @@ class DocumentEditingActivity : AppCompatActivity() {
             super.onBackPressed()
 
         }
-        buttonDel.setOnClickListener  {
+        buttonDel.setOnClickListener {
             DeleteDocumentTask().execute()
             this.finish()
-         }
+        }
 
         buttonSave.setOnClickListener {
 
@@ -113,31 +110,36 @@ class DocumentEditingActivity : AppCompatActivity() {
         ws.send("s")
         //client.dispatcher().executorService().shutdown()
     }
-    inner class DeleteDocumentTask : AsyncTask<Void, Void, Document>() {
 
-        override fun doInBackground(vararg params: Void): Document {
+    inner class DeleteDocumentTask : AsyncTask<Void, Void, Boolean>() {
 
+        override fun doInBackground(vararg params: Void): Boolean {
             try {
-                val gson = Gson()
                 val request = Request.Builder()
-                    .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/"+document!!.id)
+                    .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + '/')
                     .delete()
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
-                println("PROBA REQUEST: "+request)
-                println ("Response: "+response)
+                println("PROBA REQUEST: " + request)
+                println("Response: " + response)
+
+                if (response.isSuccessful) {
+                    return true
+                }
 
             } catch (ex: Exception) {
                 Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
             }
-            return null!!
+            return false
 
         }
 
-        override fun onPostExecute(result: Document?) {
-            println("result: "+result)
+        override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
+            println("result: " + result)
 
+            // proponuje zrobić if - zobaczyc ze result jest true czy false jak true to poinformować
+            // np Toastem czy udało sie usunąc pomyślnie czy nie
         }
     }
 
@@ -168,38 +170,38 @@ class DocumentEditingActivity : AppCompatActivity() {
             //val adapter = DocumentContextAdapter(this@DocumentEditingActivity, result!!)
             //documentTitle.text=result!!.title
             documentContext.setText(result!!.content)
-            this@DocumentEditingActivity.title=result!!.title
-
+            this@DocumentEditingActivity.title = result!!.title
 
 
         }
     }
-    inner class AsyncTaskHandleRestApi : AsyncTask<String, String, Document>() {
 
-        override fun doInBackground(vararg url: String?): Document {
+    inner class GetDocumentDetailsTask : AsyncTask<String, String, Document>() {
+
+        override fun doInBackground(vararg url: String?): Document? {
 
             try {
                 val request = Request.Builder().url(url[0]).build()
-                val response = OkHttpClient().newCall(request).execute();
+                val response = OkHttpClient().newCall(request).execute()
                 val string = response.body()?.string()
                 println(string)
-                val lDok = GsonBuilder().create().fromJson(string, Document::class.java)
-                document=lDok
-                return lDok
+
+                return GsonBuilder().create().fromJson(string, Document::class.java)
             } catch (ex: Exception) {
                 Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
             }
 
-            return null!!
+            return null
 
         }
 
         override fun onPostExecute(result: Document?) {
             super.onPostExecute(result)
 
-            documentContext.setText(document!!.content)
-            this@DocumentEditingActivity.title=document!!.title
+            document = result ?: document
 
+            documentContext.setText(document!!.content)
+            this@DocumentEditingActivity.title = document!!.title
 
         }
     }
