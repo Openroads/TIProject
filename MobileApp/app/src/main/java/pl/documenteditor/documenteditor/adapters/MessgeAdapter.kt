@@ -50,10 +50,8 @@ class MessageAdapter(private val context: Context) : BaseAdapter() {
             holder.messageBody = view.findViewById(R.id.message_body)
             convertView?.tag = holder
 
-            holder.name!!.text = "?Test"
+            holder.name!!.text = message.username
             holder.messageBody!!.text = message.text
-//            val drawable = holder.avatar!!.background as GradientDrawable
-//            drawable.setColor(Color.parseColor(message.getData().getColor()))
         }
 
         return view

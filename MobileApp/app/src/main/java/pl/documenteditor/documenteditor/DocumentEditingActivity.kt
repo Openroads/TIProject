@@ -3,15 +3,12 @@ package pl.documenteditor.documenteditor
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.text.InputType
 import android.util.Log
-import android.widget.EditText
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
-import kotlinx.android.synthetic.main.row_layout.*
 import okhttp3.*
 import okio.ByteString
 import pl.documenteditor.documenteditor.adapters.MessageAdapter
@@ -23,13 +20,15 @@ import pl.documenteditor.documenteditor.utils.Constants
 
 class DocumentEditingActivity : AppCompatActivity() {
 
-
     private var document: Document? = null
+
     private lateinit var user: User
 
     private var client: OkHttpClient = OkHttpClient()
 
     private lateinit var adapter: MessageAdapter
+
+    private val gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +42,7 @@ class DocumentEditingActivity : AppCompatActivity() {
         Log.i(TAG, "Document object selected on user list: " + document.toString())
         val id: Int = document!!.id
         val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
-        val url2= Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + id + "/editing-by/"+user.id+"/"
+        val url2 = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id + "/editing-by/" + user.id + "/"
 
 
         GetDocumentDetailsTask().execute(url, url2)
@@ -51,35 +50,35 @@ class DocumentEditingActivity : AppCompatActivity() {
         adapter = MessageAdapter(this)
         messages_view.adapter = adapter
 
-        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "say-hello/").build()
+        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
         val listener = EchoWebSocketListener()
         val ws = client.newWebSocket(request, listener)
 
-        if (document?.editingBy ==null) {
+        if (document?.editingBy == null) {
 
-        send_button.setOnClickListener {
-            start(ws)
-        }
-        buttonCancel.setOnClickListener {
-            finish()
-            UnlockDocument().execute()
-        }
+            send_button.setOnClickListener {
+                sendMessage(ws)
+            }
+            buttonCancel.setOnClickListener {
+                finish()
+                UnlockDocument().execute()
+            }
 
-        buttonDel.setOnClickListener {
-            DeleteDocumentTask().execute()
-            finish()
-            UnlockDocument().execute()
+            buttonDel.setOnClickListener {
+                DeleteDocumentTask().execute()
+                finish()
+                UnlockDocument().execute()
 
-        }
+            }
 
-        buttonSave.setOnClickListener {
-            document?.content=documentContext.text.toString()
-            UpdateDocumentTask().execute()
-            finish()
-            UnlockDocument().execute()
+            buttonSave.setOnClickListener {
+                document?.content = documentContext.text.toString()
+                UpdateDocumentTask().execute()
+                finish()
+                UnlockDocument().execute()
 
-        }}
-        else {
+            }
+        } else {
             Toast.makeText(this, "You can't edit the file now", Toast.LENGTH_LONG).show()
             documentContext.setKeyListener(null);
         }
@@ -99,13 +98,17 @@ class DocumentEditingActivity : AppCompatActivity() {
 
 
     private inner class EchoWebSocketListener : WebSocketListener() {
+
         override fun onOpen(webSocket: WebSocket, response: Response) {
-            Log.d(TAG, "websocket on open")
+            Log.d(TAG, "Web-socket on open")
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             println("Receiving : $text")
-            val m = Message(text, false)
+            val m = gson.fromJson(text, Message::class.java)
+            if (m.username == user.username) {
+                m.belongsToCurrentUser = true
+            }
             runOnUiThread {
                 adapter.add(m)
                 messages_view.setSelection(messages_view.count - 1)
@@ -125,12 +128,11 @@ class DocumentEditingActivity : AppCompatActivity() {
             println("Connection failed : $response")
             Log.e(TAG, "Web socket failure", t)
         }
-
     }
 
-    private fun start(ws: WebSocket) {
-        Log.d(TAG, "Sending to ws: " + ws.toString())
-        ws.send("s")
+    private fun sendMessage(ws: WebSocket) {
+        val message = Message(chat_message_edit_text.text.toString(), user.username)
+        ws.send(gson.toJson(message))
         //client.dispatcher().executorService().shutdown()
     }
 
@@ -139,11 +141,11 @@ class DocumentEditingActivity : AppCompatActivity() {
         override fun doInBackground(vararg url: String?): Boolean {
             try {
                 val requestBlock = Request.Builder()
-                    .url(Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + document?.id + "/stop-editing/")
+                    .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + "/stop-editing/")
                     .post(RequestBody.create(null, ""))
                     .build()
                 val response = OkHttpClient().newCall(requestBlock).execute()
-                println("*****Response: "+response)
+                println("*****Response: " + response)
                 if (response.isSuccessful) {
                     return true
                 }
@@ -194,7 +196,7 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
                 val toJson = gson.toJson(document)
-                Log.d(TAG,"Json sending in put "+toJson)
+                Log.d(TAG, "Json sending in put " + toJson)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + '/')
                     .put(RequestBody.create(Constants.JSON, toJson))
@@ -220,7 +222,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     inner class GetDocumentDetailsTask : AsyncTask<String, String, Document>() {
 
-        override fun doInBackground(vararg url: String?) : Document? {
+        override fun doInBackground(vararg url: String?): Document? {
 
             try {
                 val requestBlock = Request.Builder()
@@ -228,14 +230,15 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .post(RequestBody.create(null, ""))
                     .build()
                 val response2 = OkHttpClient().newCall(requestBlock).execute()
-                println("*****Response: "+response2)
+                println("*****Response: " + response2)
                 if (response2.isSuccessful) {
 
-                val request = Request.Builder().url(url[0]).build()
-                val response = OkHttpClient().newCall(request).execute()
-                val string = response.body()?.string()
-                return GsonBuilder().create().fromJson(string, Document::class.java)
-            }} catch (ex: Exception) {
+                    val request = Request.Builder().url(url[0]).build()
+                    val response = OkHttpClient().newCall(request).execute()
+                    val string = response.body()?.string()
+                    return GsonBuilder().create().fromJson(string, Document::class.java)
+                }
+            } catch (ex: Exception) {
                 Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
             }
             return null
