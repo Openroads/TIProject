@@ -3,7 +3,10 @@ package pl.documenteditor.documenteditor
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.text.InputType
 import android.util.Log
+import android.widget.EditText
+import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
@@ -41,6 +44,8 @@ class DocumentEditingActivity : AppCompatActivity() {
         val id: Int = document!!.id
         val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
         val url2= Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + id + "/editing-by/"+user.id+"/"
+
+
         GetDocumentDetailsTask().execute(url, url2)
 
         adapter = MessageAdapter(this)
@@ -50,28 +55,40 @@ class DocumentEditingActivity : AppCompatActivity() {
         val listener = EchoWebSocketListener()
         val ws = client.newWebSocket(request, listener)
 
+        if (document?.editingBy ==null) {
+
         send_button.setOnClickListener {
             start(ws)
         }
         buttonCancel.setOnClickListener {
-            super.onBackPressed()
+            finish()
+            UnlockDocument().execute()
         }
 
         buttonDel.setOnClickListener {
             DeleteDocumentTask().execute()
-            super.onBackPressed()
+            finish()
+            UnlockDocument().execute()
+
         }
 
         buttonSave.setOnClickListener {
             document?.content=documentContext.text.toString()
             UpdateDocumentTask().execute()
-            super.onBackPressed()
+            finish()
+            UnlockDocument().execute()
+
+        }}
+        else {
+            Toast.makeText(this, "You can't edit the file now", Toast.LENGTH_LONG).show()
+            documentContext.setKeyListener(null);
         }
 
     }
 
     override fun onBackPressed() {
-
+        UnlockDocument().execute()
+        finish()
         super.onBackPressed()
     }
 
@@ -115,6 +132,32 @@ class DocumentEditingActivity : AppCompatActivity() {
         Log.d(TAG, "Sending to ws: " + ws.toString())
         ws.send("s")
         //client.dispatcher().executorService().shutdown()
+    }
+
+    inner class UnlockDocument : AsyncTask<String, String, Boolean>() {
+
+        override fun doInBackground(vararg url: String?): Boolean {
+            try {
+                val requestBlock = Request.Builder()
+                    .url(Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + document?.id + "/stop-editing/")
+                    .post(RequestBody.create(null, ""))
+                    .build()
+                val response = OkHttpClient().newCall(requestBlock).execute()
+                println("*****Response: "+response)
+                if (response.isSuccessful) {
+                    return true
+                }
+
+            } catch (ex: Exception) {
+                Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
+            }
+            return false
+
+        }
+
+        override fun onPostExecute(result: Boolean) {
+            super.onPostExecute(result)
+        }
     }
 
     inner class DeleteDocumentTask : AsyncTask<Void, Void, Boolean>() {
