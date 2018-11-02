@@ -60,22 +60,19 @@ class DocumentEditingActivity : AppCompatActivity() {
                 sendMessage(ws)
             }
             buttonCancel.setOnClickListener {
-                finish()
-                UnlockDocument().execute()
+                onBackPressed()
             }
 
             buttonDel.setOnClickListener {
                 DeleteDocumentTask().execute()
-                finish()
-                UnlockDocument().execute()
+                onBackPressed()
 
             }
 
             buttonSave.setOnClickListener {
                 document?.content = documentContext.text.toString()
                 UpdateDocumentTask().execute()
-                finish()
-                UnlockDocument().execute()
+                onBackPressed()
 
             }
         } else {
@@ -87,7 +84,6 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         UnlockDocument().execute()
-        finish()
         super.onBackPressed()
     }
 
