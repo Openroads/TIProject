@@ -4,6 +4,7 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -77,7 +78,12 @@ class DocumentEditingActivity : AppCompatActivity() {
             }
         } else {
             Toast.makeText(this, "You can't edit the file now", Toast.LENGTH_LONG).show()
-            documentContext.setKeyListener(null);
+            documentContext.setKeyListener(null)
+            buttonDel.isEnabled=false
+            buttonSave.isEnabled=false
+            buttonCancel.setOnClickListener {
+                onBackPressed()
+            }
         }
 
     }
