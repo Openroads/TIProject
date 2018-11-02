@@ -11,15 +11,16 @@
 
     <Button
             android:text="Show files"
-            android:layout_width="203dp"
+            android:layout_width="0dp"
             android:layout_height="34dp" android:id="@+id/API_button"
             android:background="@color/colorPrimaryDark"
             app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="95dp"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="86dp" app:layout_constraintHorizontal_bias="0.0"
+            android:layout_marginEnd="89dp" app:layout_constraintHorizontal_bias="0.0"
             tools:fontFamily="sans-serif-condensed" android:textSize="18sp" android:layout_marginBottom="28dp"
             app:layout_constraintBottom_toTopOf="@+id/docListView" app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginTop="32dp" android:textColor="@android:color/background_light"/>
+            android:layout_marginTop="32dp" android:textColor="@android:color/background_light"
+            android:textAlignment="center"/>
 
     <ListView
             android:id="@+id/docListView"
