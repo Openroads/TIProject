@@ -22,7 +22,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
 
     private var document: Document? = null
-    private var user: User? = User(username = "John", password = "pass")
+    private lateinit var user: User
 
     private var client: OkHttpClient = OkHttpClient()
 
@@ -35,12 +35,12 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         // this is the document selected from list view
         document = intent.getSerializableExtra(MainActivity.DOCUMENT_DATA) as? Document
-        user = intent.getSerializableExtra(LoginActivity.USER_DATA) as? User ?: user
+        user = intent.getSerializableExtra(LoginActivity.USER_DATA) as User
 
         Log.i(TAG, "Document object selected on user list: " + document.toString())
         val id: Int = document!!.id
         val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
-        val url2= Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + id + "/editing-by/"+user?.id+"/"
+        val url2= Constants.REST_SERVERS_ADDRESS+ "online-docs/document/" + id + "/editing-by/"+user.id+"/"
         GetDocumentDetailsTask().execute(url, url2)
 
         adapter = MessageAdapter(this)
@@ -180,12 +180,9 @@ class DocumentEditingActivity : AppCompatActivity() {
         override fun doInBackground(vararg url: String?) : Document? {
 
             try {
-                val gson = Gson()
-                val toJson = gson.toJson(user)
-                println("*****USER: "+toJson)
                 val requestBlock = Request.Builder()
                     .url(url[1])
-                    .post(RequestBody.create(Constants.JSON, toJson))
+                    .post(RequestBody.create(null, ""))
                     .build()
                 val response2 = OkHttpClient().newCall(requestBlock).execute()
                 println("*****Response: "+response2)

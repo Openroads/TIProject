@@ -18,6 +18,7 @@ import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
 import pl.documenteditor.documenteditor.model.User
@@ -84,10 +85,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val selectedDocument = result[position]
 
                 val intentDocumentEditing = Intent(this@MainActivity, DocumentEditingActivity::class.java)
-
                 intentDocumentEditing.putExtra(DOCUMENT_DATA, selectedDocument)
-
+                intentDocumentEditing.putExtra(USER_DATA, user )
                 startActivity(intentDocumentEditing)
+
+
+
             }
         }
     }
