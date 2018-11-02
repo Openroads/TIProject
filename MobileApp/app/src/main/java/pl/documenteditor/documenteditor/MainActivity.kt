@@ -47,10 +47,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
+        val url = Constants.REST_SERVERS_ADDRESS + "online-docs/documents/"
+        AsyncTaskHandleRestApi().execute(url)
 
-        API_button.setOnClickListener {
-            val url = Constants.REST_SERVERS_ADDRESS + "online-docs/documents/"
-
+        updateButton.setOnClickListener {
             AsyncTaskHandleRestApi().execute(url)
         }
     }
