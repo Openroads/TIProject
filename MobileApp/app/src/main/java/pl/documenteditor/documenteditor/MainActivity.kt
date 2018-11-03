@@ -11,22 +11,27 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.app_bar_main2.*
+import kotlinx.android.synthetic.main.content_document_editing.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
+import pl.documenteditor.documenteditor.model.NewDocument
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private var user: User? = User(username = "John", password = "pass")
+    private var document: NewDocument? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,8 +42,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            document= NewDocument(NewFileEdit.text.toString() )
+            NewDocumentTask().execute()
         }
 
         val toggle = ActionBarDrawerToggle(
@@ -54,6 +59,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         updateButton.setOnClickListener {
             AsyncTaskHandleRestApi().execute(url)
         }
+
     }
 
     inner class AsyncTaskHandleRestApi : AsyncTask<String, String, List<Document>>() {
@@ -154,5 +160,45 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         const val TAG: String = "ODE_MainActivity" // ODE - online document editor
         const val DOCUMENT_DATA = "document_data_object"
     }
+
+    inner class NewDocumentTask : AsyncTask<String, String, Boolean>() {
+
+        override fun doInBackground(vararg url: String?): Boolean {
+
+            try {
+                val gson = Gson ()
+                val toJson = gson.toJson(document)
+                Log.d(TAG, "Main Json           "+toJson)
+                val request = Request.Builder()
+                    .url(Constants.REST_SERVERS_ADDRESS + "online-docs/documents/")
+                    .post(RequestBody.create(Constants.JSON, toJson))
+                    .build()
+                val response = OkHttpClient().newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody= response.body()?.string()
+                    Log.d(TAG, "Response body: "+responseBody)
+                    val dok =Gson().fromJson(responseBody, Document::class.java)
+                    val intentDocumentNew = Intent(this@MainActivity, DocumentEditingActivity::class.java)
+                    intentDocumentNew.putExtra(DOCUMENT_DATA, dok)
+                    intentDocumentNew.putExtra(USER_DATA, user )
+                    startActivity(intentDocumentNew)
+                    Log.d(TAG, "lOG DIAGNOSTYCZNY: ")
+                    return true
+                }
+
+            } catch (ex: Exception) {
+                Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
+            }
+            return false
+
+        }
+
+        override fun onPostExecute(result: Boolean) {
+            super.onPostExecute(result)
+            //toast
+        }
+    }
+
+
 
 }
