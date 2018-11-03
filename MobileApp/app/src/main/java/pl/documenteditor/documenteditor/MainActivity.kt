@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_main2.*
@@ -161,9 +162,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         const val DOCUMENT_DATA = "document_data_object"
     }
 
-    inner class NewDocumentTask : AsyncTask<String, String, Boolean>() {
+    inner class NewDocumentTask : AsyncTask<String, String, Document>() {
 
-        override fun doInBackground(vararg url: String?): Boolean {
+        override fun doInBackground(vararg url: String?): Document? {
 
             try {
                 val gson = Gson ()
@@ -178,23 +179,28 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     val responseBody= response.body()?.string()
                     Log.d(TAG, "Response body: "+responseBody)
                     val dok =Gson().fromJson(responseBody, Document::class.java)
-                    val intentDocumentNew = Intent(this@MainActivity, DocumentEditingActivity::class.java)
-                    intentDocumentNew.putExtra(DOCUMENT_DATA, dok)
-                    intentDocumentNew.putExtra(USER_DATA, user )
-                    startActivity(intentDocumentNew)
                     Log.d(TAG, "lOG DIAGNOSTYCZNY: ")
-                    return true
+                    return dok
                 }
 
             } catch (ex: Exception) {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
-            return false
+            return null
 
         }
 
-        override fun onPostExecute(result: Boolean) {
-            super.onPostExecute(result)
+        override fun onPostExecute(result: Document?) {
+            if (result !=null) {
+                //super.onPostExecute(result)
+                val intentDocumentNew = Intent(this@MainActivity, DocumentEditingActivity::class.java)
+                intentDocumentNew.putExtra(DOCUMENT_DATA, result)
+                intentDocumentNew.putExtra(USER_DATA, user)
+                startActivity(intentDocumentNew)
+            }
+            else {
+                Toast.makeText(this@MainActivity, "Can't create new file", Toast.LENGTH_LONG).show()
+            }
             //toast
         }
     }
