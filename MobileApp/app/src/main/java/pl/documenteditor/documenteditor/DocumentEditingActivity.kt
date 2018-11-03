@@ -54,42 +54,42 @@ class DocumentEditingActivity : AppCompatActivity() {
         val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
         val listener = EchoWebSocketListener()
         val ws = client.newWebSocket(request, listener)
+        send_button.setOnClickListener {
+            sendMessage(ws)
+        }
+        buttonCancel.setOnClickListener {
+            onBackPressed()
+        }
 
-        if (document?.editingBy == null) {
+        buttonDel.setOnClickListener {
+            DeleteDocumentTask().execute()
+            onBackPressed()
 
-            send_button.setOnClickListener {
-                sendMessage(ws)
-            }
-            buttonCancel.setOnClickListener {
-                onBackPressed()
-            }
+        }
 
-            buttonDel.setOnClickListener {
-                DeleteDocumentTask().execute()
-                onBackPressed()
+        buttonSave.setOnClickListener {
+            document?.content = documentContext.text.toString()
+            UpdateDocumentTask().execute()
+            onBackPressed()
 
-            }
-
-            buttonSave.setOnClickListener {
-                document?.content = documentContext.text.toString()
-                UpdateDocumentTask().execute()
-                onBackPressed()
-
-            }
-        } else {
+        }
+        if (document?.editingBy != null) {
             Toast.makeText(this, "You can't edit the file now", Toast.LENGTH_LONG).show()
             documentContext.setKeyListener(null)
             buttonDel.isEnabled=false
             buttonSave.isEnabled=false
-            buttonCancel.setOnClickListener {
-                onBackPressed()
-            }
+
+
         }
+
 
     }
 
     override fun onBackPressed() {
-        UnlockDocument().execute()
+        if (document?.editingBy != null) {
+            UnlockDocument().execute()
+        }
+
         super.onBackPressed()
     }
 
