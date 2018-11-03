@@ -54,6 +54,12 @@ class DocumentEditingActivity : AppCompatActivity() {
         val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
         val listener = EchoWebSocketListener()
         val ws = client.newWebSocket(request, listener)
+
+        if (document?.editingBy == null) {
+            LockDocument().execute()
+            document?.editingBy = user.username
+        }
+
         send_button.setOnClickListener {
             sendMessage(ws)
         }
@@ -64,30 +70,31 @@ class DocumentEditingActivity : AppCompatActivity() {
         buttonDel.setOnClickListener {
             DeleteDocumentTask().execute()
             onBackPressed()
-
         }
 
         buttonSave.setOnClickListener {
             document?.content = documentContext.text.toString()
             UpdateDocumentTask().execute()
-            onBackPressed()
+            //onBackPressed()
+            UnlockDocument().execute()
+            finish()
 
         }
-        if (document?.editingBy != null) {
+        if (document?.editingBy != null && document?.editingBy != user.username) {
             Toast.makeText(this, "You can't edit the file now", Toast.LENGTH_LONG).show()
             documentContext.setKeyListener(null)
-            buttonDel.isEnabled=false
-            buttonSave.isEnabled=false
-
-
+            buttonDel.isEnabled = false
+            buttonSave.isEnabled = false
         }
-
 
     }
 
     override fun onBackPressed() {
-        if (document?.editingBy != null) {
+
+        if (document?.editingBy == user.username) {
             UnlockDocument().execute()
+        } else {
+            finish()
         }
 
         super.onBackPressed()
@@ -147,11 +154,37 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .post(RequestBody.create(null, ""))
                     .build()
                 val response = OkHttpClient().newCall(requestBlock).execute()
-                println("*****Response: " + response)
+
                 if (response.isSuccessful) {
                     return true
                 }
 
+            } catch (ex: Exception) {
+                Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
+            }
+            return false
+
+        }
+
+        override fun onPostExecute(result: Boolean) {
+            super.onPostExecute(result)
+        }
+    }
+
+    inner class LockDocument : AsyncTask<String, String, Boolean>() {
+
+        override fun doInBackground(vararg url: String?): Boolean {
+            try {
+                val requestLock = Request.Builder()
+                    .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + "/editing-by/" + user.id + "/")
+                    .post(RequestBody.create(null, ""))
+                    .build()
+                val response = OkHttpClient().newCall(requestLock).execute()
+
+                if (response.isSuccessful) {
+                    return true
+
+                }
             } catch (ex: Exception) {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
@@ -173,11 +206,9 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .delete()
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
-
                 if (response.isSuccessful) {
                     return true
                 }
-
             } catch (ex: Exception) {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
@@ -196,16 +227,12 @@ class DocumentEditingActivity : AppCompatActivity() {
 
             try {
                 val gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
-
                 val toJson = gson.toJson(document)
-                Log.d(TAG, "Json sending in put " + toJson)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + '/')
                     .put(RequestBody.create(Constants.JSON, toJson))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
-
-
                 if (response.isSuccessful) {
                     return true
                 }
@@ -219,6 +246,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
+            //toast
         }
     }
 
@@ -227,19 +255,11 @@ class DocumentEditingActivity : AppCompatActivity() {
         override fun doInBackground(vararg url: String?): Document? {
 
             try {
-                val requestBlock = Request.Builder()
-                    .url(url[1])
-                    .post(RequestBody.create(null, ""))
-                    .build()
-                val response2 = OkHttpClient().newCall(requestBlock).execute()
-                println("*****Response: " + response2)
-                if (response2.isSuccessful) {
+                val request = Request.Builder().url(url[0]).build()
+                val response = OkHttpClient().newCall(request).execute()
+                val string = response.body()?.string()
+                return GsonBuilder().create().fromJson(string, Document::class.java)
 
-                    val request = Request.Builder().url(url[0]).build()
-                    val response = OkHttpClient().newCall(request).execute()
-                    val string = response.body()?.string()
-                    return GsonBuilder().create().fromJson(string, Document::class.java)
-                }
             } catch (ex: Exception) {
                 Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
             }
@@ -254,6 +274,40 @@ class DocumentEditingActivity : AppCompatActivity() {
             this@DocumentEditingActivity.title = document!!.title
 
         }
-    }
 
+        inner class GetDocumentDetailsTask : AsyncTask<String, String, Document>() {
+
+            override fun doInBackground(vararg url: String?): Document? {
+
+                try {
+                    val requestBlock = Request.Builder()
+                        .url(url[1])
+                        .post(RequestBody.create(null, ""))
+                        .build()
+                    val response2 = OkHttpClient().newCall(requestBlock).execute()
+                    println("*****Response: " + response2)
+                    if (response2.isSuccessful) {
+
+                        val request = Request.Builder().url(url[0]).build()
+                        val response = OkHttpClient().newCall(request).execute()
+                        val string = response.body()?.string()
+                        return GsonBuilder().create().fromJson(string, Document::class.java)
+                    }
+                } catch (ex: Exception) {
+                    Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
+                }
+                return null
+
+            }
+
+            override fun onPostExecute(result: Document?) {
+                super.onPostExecute(result)
+                document = result ?: document
+                documentContext.setText(document!!.content)
+                this@DocumentEditingActivity.title = document!!.title
+
+            }
+        }
+
+    }
 }
