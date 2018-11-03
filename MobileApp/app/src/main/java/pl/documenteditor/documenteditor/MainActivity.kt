@@ -90,14 +90,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             docListView.setOnItemClickListener { parent, view, position, id ->
                 val selectedDocument = result[position]
-
-                val intentDocumentEditing = Intent(this@MainActivity, DocumentEditingActivity::class.java)
-                intentDocumentEditing.putExtra(DOCUMENT_DATA, selectedDocument)
-                intentDocumentEditing.putExtra(USER_DATA, user )
-                startActivity(intentDocumentEditing)
-
-
-
+                sendIntentToDocumentEditing(user!!, selectedDocument)
             }
         }
     }
@@ -193,16 +186,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onPostExecute(result: Document?) {
             if (result !=null) {
                 //super.onPostExecute(result)
-                val intentDocumentNew = Intent(this@MainActivity, DocumentEditingActivity::class.java)
-                intentDocumentNew.putExtra(DOCUMENT_DATA, result)
-                intentDocumentNew.putExtra(USER_DATA, user)
-                startActivity(intentDocumentNew)
+                sendIntentToDocumentEditing(user!!,result)
             }
             else {
                 Toast.makeText(this@MainActivity, "Can't create new file", Toast.LENGTH_LONG).show()
             }
             //toast
         }
+    }
+    private fun sendIntentToDocumentEditing (user: User, document: Document)
+    {
+        val intent = Intent(this@MainActivity, DocumentEditingActivity::class.java)
+        intent.putExtra(DOCUMENT_DATA, document)
+        intent.putExtra(USER_DATA, user)
+        startActivity(intent)
     }
 
 
