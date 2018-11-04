@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         fab.setOnClickListener { view ->
             document= NewDocument(NewFileEdit.text.toString() )
             NewDocumentTask().execute()
+            NewFileEdit.text.clear()
         }
 
         val toggle = ActionBarDrawerToggle(

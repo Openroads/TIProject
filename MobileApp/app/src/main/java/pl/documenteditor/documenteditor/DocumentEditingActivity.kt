@@ -75,6 +75,7 @@ class DocumentEditingActivity : AppCompatActivity() {
         buttonSave.setOnClickListener {
             document?.content = documentContext.text.toString()
             UpdateDocumentTask().execute()
+
             //onBackPressed()
             UnlockDocument().execute()
             finish()
@@ -207,11 +208,14 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
+                    //Toast.makeText(this@DocumentEditingActivity, "File deleted! ", Toast.LENGTH_LONG).show()
                     return true
                 }
             } catch (ex: Exception) {
+
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
+            //Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not deleted! ", Toast.LENGTH_LONG).show()
             return false
 
         }
@@ -234,12 +238,15 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
+                    //Toast.makeText(this@DocumentEditingActivity, "File updated! ", Toast.LENGTH_LONG).show()
                     return true
                 }
 
             } catch (ex: Exception) {
+
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
+            //Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not saved! ", Toast.LENGTH_LONG).show()
             return false
 
         }

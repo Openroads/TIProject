@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content" app:fontFamily="sans-serif" android:textSize="22sp"
             tools:textColor="@color/colorPrimaryDark" android:textStyle="bold"
-            android:textColor="@android:color/holo_blue_dark"/>
+            android:textColor="@android:color/black"/>
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                   xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools"
                   android:orientation="horizontal"

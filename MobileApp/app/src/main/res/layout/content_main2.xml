@@ -43,6 +43,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Enter new file name"
+                android:backgroundTint="@color/colorPrimary"
                 android:id= "@+id/NewFileEdit"/>
     </android.support.design.widget.TextInputLayout>
 
