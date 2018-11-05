@@ -352,7 +352,7 @@ class Dashboard extends React.Component
                         </Button>{" "}
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
-                    <Chat username = {this.state.userName}/>
+                    <Chat username = {this.state.userName} documentId = {this.state.idEditedDocument}/>
                     </Modal>
                 </div>
         );

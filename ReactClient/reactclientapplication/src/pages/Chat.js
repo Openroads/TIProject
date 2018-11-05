@@ -13,14 +13,15 @@ class Chat extends React.Component{
         this.sendHandler = this.sendHandler.bind(this);
 
         // Create socketConnection
-        //this.socket = new WebSocket('ws://localhost:8000/ws/');
+        const documentId = this.props.documentId;
+        this.socket = new WebSocket(`ws://localhost:8000/ws/chat/${documentId}/`);
 
-       /* this.socket.onmessage = e => {
+       this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
             var data = JSON.parse(e.data);
             console.log(data);
             var userName = data['username'];
-            var message = data['message'];
+            var message = data['text'];
 
             const msObject = {
                 username: userName,
@@ -32,7 +33,7 @@ class Chat extends React.Component{
 
         this.socket.onclose = function(e) {
             console.log('Chat socket closed unexpectedly');
-        }; */
+        }; 
     }
 
     sendHandler(message){
@@ -43,7 +44,7 @@ class Chat extends React.Component{
         };
 
         // Send message via sockets
-       // this.socket.send(messageObject);
+       this.socket.send(messageObject);
         
         messageObject.fromMe = true;
         this.addMessage(messageObject);
