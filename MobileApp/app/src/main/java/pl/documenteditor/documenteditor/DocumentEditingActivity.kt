@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
@@ -27,7 +26,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     private lateinit var adapter: MessageAdapter
 
-    private val gson = Gson()
+    private val messageGson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
     private lateinit var ws: WebSocket
 
@@ -50,7 +49,7 @@ class DocumentEditingActivity : AppCompatActivity() {
         messages_view.adapter = adapter
 
         val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
-        val listener = EchoWebSocketListener()
+        val listener = ChatWebSocketListener()
         ws = client.newWebSocket(request, listener)
 
         send_button.setOnClickListener {
@@ -105,7 +104,7 @@ class DocumentEditingActivity : AppCompatActivity() {
         const val NORMAL_CLOSURE_STATUS = 1000
     }
 
-    private inner class EchoWebSocketListener : WebSocketListener() {
+    private inner class ChatWebSocketListener : WebSocketListener() {
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d(TAG, "Web-socket on open")
@@ -113,7 +112,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         override fun onMessage(webSocket: WebSocket, text: String) {
             Log.i(TAG, "Receiving chat message : $text")
-            val m = gson.fromJson(text, Message::class.java)
+            val m = messageGson.fromJson(text, Message::class.java)
             if (m.username == user.username) {
                 m.belongsToCurrentUser = true
             }
@@ -134,7 +133,8 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     private fun sendMessage(ws: WebSocket) {
         val message = Message(chat_message_edit_text.text.toString(), user.username)
-        ws.send(gson.toJson(message))
+        ws.send(messageGson.toJson(message))
+        chat_message_edit_text.text.clear()
     }
 
     inner class UnlockDocument : AsyncTask<String, String, Boolean>() {

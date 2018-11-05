@@ -1,3 +1,5 @@
 package pl.documenteditor.documenteditor.model
 
-data class Message(val text: String, val username: String, var belongsToCurrentUser:Boolean = false)
+import com.google.gson.annotations.Expose
+
+data class Message(@Expose val text: String, @Expose val username: String, @Expose(serialize = false, deserialize = false) var belongsToCurrentUser:Boolean = false)
