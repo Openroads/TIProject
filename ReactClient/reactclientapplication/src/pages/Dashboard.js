@@ -14,6 +14,7 @@ import {
 import DocumentList from './DocumentList';
 import axios from 'axios';
 import avatar from '../Images/img_avatar.png';
+import Chat from './Chat';
 
 class Dashboard extends React.Component 
 {
@@ -351,6 +352,7 @@ class Dashboard extends React.Component
                         </Button>{" "}
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
+                    <Chat username = {this.state.userName}/>
                     </Modal>
                 </div>
         );
