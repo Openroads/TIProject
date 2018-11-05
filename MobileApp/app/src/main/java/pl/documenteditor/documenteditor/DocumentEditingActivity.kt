@@ -43,10 +43,8 @@ class DocumentEditingActivity : AppCompatActivity() {
         Log.i(TAG, "Document object selected on user list: " + document.toString())
         val id: Int = document!!.id
         val url = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id
-        val url2 = Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + id + "/editing-by/" + user.id + "/"
 
-
-        GetDocumentDetailsTask().execute(url, url2)
+        GetDocumentDetailsTask().execute(url)
 
         adapter = MessageAdapter(this)
         messages_view.adapter = adapter
@@ -79,6 +77,7 @@ class DocumentEditingActivity : AppCompatActivity() {
             //onBackPressed()
             UnlockDocument().execute()
             finish()
+
 
         }
         if (document?.editingBy != null && document?.editingBy != user.username) {
@@ -208,20 +207,25 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
-                    //Toast.makeText(this@DocumentEditingActivity, "File deleted! ", Toast.LENGTH_LONG).show()
                     return true
                 }
             } catch (ex: Exception) {
 
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
-            //Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not deleted! ", Toast.LENGTH_LONG).show()
             return false
 
         }
 
         override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
+            if (result==true){
+                Toast.makeText(this@DocumentEditingActivity, "File deleted! ", Toast.LENGTH_LONG).show()
+
+            }else {
+                Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not deleted! ", Toast.LENGTH_LONG).show()
+
+            }
         }
     }
 
@@ -238,7 +242,6 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
-                    //Toast.makeText(this@DocumentEditingActivity, "File updated! ", Toast.LENGTH_LONG).show()
                     return true
                 }
 
@@ -246,13 +249,18 @@ class DocumentEditingActivity : AppCompatActivity() {
 
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
-            //Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not saved! ", Toast.LENGTH_LONG).show()
+
             return false
 
         }
 
         override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
+            if (result==true){
+                Toast.makeText(this@DocumentEditingActivity, "File saved! ", Toast.LENGTH_LONG).show()
+            }else {
+                Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not saved! ", Toast.LENGTH_LONG).show()
+            }
             //toast
         }
     }

@@ -187,6 +187,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onPostExecute(result: Document?) {
             if (result !=null) {
                 //super.onPostExecute(result)
+                Toast.makeText(this@MainActivity, "New file created!", Toast.LENGTH_LONG).show()
                 sendIntentToDocumentEditing(user!!,result)
             }
             else {
