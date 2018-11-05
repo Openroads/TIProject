@@ -4,14 +4,12 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.View
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
 import okhttp3.*
-import okio.ByteString
 import pl.documenteditor.documenteditor.adapters.MessageAdapter
 import pl.documenteditor.documenteditor.model.Document
 import pl.documenteditor.documenteditor.model.Message
@@ -30,6 +28,8 @@ class DocumentEditingActivity : AppCompatActivity() {
     private lateinit var adapter: MessageAdapter
 
     private val gson = Gson()
+
+    private lateinit var ws: WebSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +51,7 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
         val listener = EchoWebSocketListener()
-        val ws = client.newWebSocket(request, listener)
+        ws = client.newWebSocket(request, listener)
 
         if (document?.editingBy == null) {
             LockDocument().execute()
@@ -74,7 +74,7 @@ class DocumentEditingActivity : AppCompatActivity() {
             document?.content = documentContext.text.toString()
             UpdateDocumentTask().execute()
 
-            //onBackPressed()
+            //onBackPressed()//TODO TO EXPLAIN
             UnlockDocument().execute()
             finish()
 
@@ -100,11 +100,15 @@ class DocumentEditingActivity : AppCompatActivity() {
         super.onBackPressed()
     }
 
-    companion object {
-        const val TAG: String = "ODE_DocumentEditingActivity" // ODE - online document editor
-        const val NORMAL_CLOSURE_STATUS = 1000
+    override fun onDestroy() {
+        ws.close(NORMAL_CLOSURE_STATUS, "Activity destroyed")
+        super.onDestroy()
     }
 
+    companion object {
+        const val TAG: String = "DocumentEditingActivity" // ODE - online document editor
+        const val NORMAL_CLOSURE_STATUS = 1000
+    }
 
     private inner class EchoWebSocketListener : WebSocketListener() {
 
@@ -113,7 +117,7 @@ class DocumentEditingActivity : AppCompatActivity() {
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            println("Receiving : $text")
+            Log.i(TAG, "Receiving chat message : $text")
             val m = gson.fromJson(text, Message::class.java)
             if (m.username == user.username) {
                 m.belongsToCurrentUser = true
@@ -124,25 +128,18 @@ class DocumentEditingActivity : AppCompatActivity() {
             }
         }
 
-        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-            println("Receiving bytes : " + bytes.hex())
-        }
-
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            //webSocket.close(NORMAL_CLOSURE_STATUS, null)
-            println("Closing : $code / $reason")
+            Log.i(TAG, "Websocket closing: $code / $reason")
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            println("Connection failed : $response")
-            Log.e(TAG, "Web socket failure", t)
+            Log.e(TAG, "Web socket failure with response: $response", t)
         }
     }
 
     private fun sendMessage(ws: WebSocket) {
         val message = Message(chat_message_edit_text.text.toString(), user.username)
         ws.send(gson.toJson(message))
-        //client.dispatcher().executorService().shutdown()
     }
 
     inner class UnlockDocument : AsyncTask<String, String, Boolean>() {
@@ -160,13 +157,14 @@ class DocumentEditingActivity : AppCompatActivity() {
                 }
 
             } catch (ex: Exception) {
-                Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
+                Log.e(TAG, "Cant get data from rest api server", ex)
             }
             return false
 
         }
 
         override fun onPostExecute(result: Boolean) {
+            Log.i(TAG, "Document unlock status: $result")
             super.onPostExecute(result)
         }
     }
@@ -189,10 +187,10 @@ class DocumentEditingActivity : AppCompatActivity() {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
             return false
-
         }
 
         override fun onPostExecute(result: Boolean) {
+            Log.i(TAG, "Document lock status: $result")
             super.onPostExecute(result)
         }
     }
@@ -219,11 +217,15 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
-            if (result==true){
+            if (result) {
                 Toast.makeText(this@DocumentEditingActivity, "File deleted! ", Toast.LENGTH_LONG).show()
 
-            }else {
-                Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not deleted! ", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(
+                    this@DocumentEditingActivity,
+                    "Something went wrong, file not deleted! ",
+                    Toast.LENGTH_LONG
+                ).show()
 
             }
         }
@@ -256,12 +258,15 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         override fun onPostExecute(result: Boolean) {
             super.onPostExecute(result)
-            if (result==true){
+            if (result) {
                 Toast.makeText(this@DocumentEditingActivity, "File saved! ", Toast.LENGTH_LONG).show()
-            }else {
-                Toast.makeText(this@DocumentEditingActivity, "Something went wrong, file not saved! ", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(
+                    this@DocumentEditingActivity,
+                    "Something went wrong, file not saved! ",
+                    Toast.LENGTH_LONG
+                ).show()
             }
-            //toast
         }
     }
 
@@ -312,7 +317,6 @@ class DocumentEditingActivity : AppCompatActivity() {
                     Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
                 }
                 return null
-
             }
 
             override fun onPostExecute(result: Document?) {
@@ -320,7 +324,6 @@ class DocumentEditingActivity : AppCompatActivity() {
                 document = result ?: document
                 documentContext.setText(document!!.content)
                 this@DocumentEditingActivity.title = document!!.title
-
             }
         }
 
