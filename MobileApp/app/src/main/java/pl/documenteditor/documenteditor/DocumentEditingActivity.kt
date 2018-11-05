@@ -53,11 +53,6 @@ class DocumentEditingActivity : AppCompatActivity() {
         val listener = EchoWebSocketListener()
         ws = client.newWebSocket(request, listener)
 
-        if (document?.editingBy == null) {
-            LockDocument().execute()
-            document?.editingBy = user.username
-        }
-
         send_button.setOnClickListener {
             sendMessage(ws)
         }
@@ -290,6 +285,11 @@ class DocumentEditingActivity : AppCompatActivity() {
         override fun onPostExecute(result: Document?) {
             super.onPostExecute(result)
             document = result ?: document
+            if (document?.editingBy == null) {
+                LockDocument().execute()
+                document?.editingBy = user.username
+            }
+
             documentContext.setText(document!!.content)
             this@DocumentEditingActivity.title = document!!.title
 

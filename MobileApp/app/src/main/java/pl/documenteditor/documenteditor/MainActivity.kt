@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.NavigationView
-import android.support.design.widget.Snackbar
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
@@ -16,7 +15,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.app_bar_main2.*
-import kotlinx.android.synthetic.main.content_document_editing.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.OkHttpClient
@@ -31,8 +29,11 @@ import pl.documenteditor.documenteditor.utils.Constants
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
-    private var user: User? = User(username = "John", password = "pass")
+    private var user: User? = User(1, username = "John", password = "pass")
+
     private var document: NewDocument? = null
+
+    private val DOCUMENT_LIST_REST_ENDPOINT = Constants.REST_SERVERS_ADDRESS + "online-docs/documents/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,27 +42,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         user = intent.getSerializableExtra(LoginActivity.USER_DATA) as? User ?: user
 
-
         fab.setOnClickListener { view ->
-            document= NewDocument(NewFileEdit.text.toString() )
+            document = NewDocument(NewFileEdit.text.toString())
             NewDocumentTask().execute()
             NewFileEdit.text.clear()
         }
 
         val toggle = ActionBarDrawerToggle(
-            this, drawer_layout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
+            this,
+            drawer_layout,
+            toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
         )
+
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
 
         nav_view.setNavigationItemSelectedListener(this)
-        val url = Constants.REST_SERVERS_ADDRESS + "online-docs/documents/"
-        AsyncTaskHandleRestApi().execute(url)
 
         updateButton.setOnClickListener {
-            AsyncTaskHandleRestApi().execute(url)
+            AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
         }
+    }
 
+    override fun onStart() {
+        super.onStart()
+        AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
     }
 
     inner class AsyncTaskHandleRestApi : AsyncTask<String, String, List<Document>>() {
@@ -161,18 +168,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun doInBackground(vararg url: String?): Document? {
 
             try {
-                val gson = Gson ()
+                val gson = Gson()
                 val toJson = gson.toJson(document)
-                Log.d(TAG, "Main Json           "+toJson)
+                Log.d(TAG, "Main Json           " + toJson)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/documents/")
                     .post(RequestBody.create(Constants.JSON, toJson))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
-                    val responseBody= response.body()?.string()
-                    Log.d(TAG, "Response body: "+responseBody)
-                    val dok =Gson().fromJson(responseBody, Document::class.java)
+                    val responseBody = response.body()?.string()
+                    Log.d(TAG, "Response body: " + responseBody)
+                    val dok = Gson().fromJson(responseBody, Document::class.java)
                     Log.d(TAG, "lOG DIAGNOSTYCZNY: ")
                     return dok
                 }
@@ -185,25 +192,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         override fun onPostExecute(result: Document?) {
-            if (result !=null) {
-                //super.onPostExecute(result)
+            if (result != null) {
                 Toast.makeText(this@MainActivity, "New file created!", Toast.LENGTH_LONG).show()
-                sendIntentToDocumentEditing(user!!,result)
-            }
-            else {
+                sendIntentToDocumentEditing(user!!, result)
+            } else {
                 Toast.makeText(this@MainActivity, "Can't create new file", Toast.LENGTH_LONG).show()
             }
-            //toast
         }
     }
-    private fun sendIntentToDocumentEditing (user: User, document: Document)
-    {
+
+    private fun sendIntentToDocumentEditing(user: User, document: Document) {
         val intent = Intent(this@MainActivity, DocumentEditingActivity::class.java)
         intent.putExtra(DOCUMENT_DATA, document)
         intent.putExtra(USER_DATA, user)
         startActivity(intent)
     }
-
 
 
 }
