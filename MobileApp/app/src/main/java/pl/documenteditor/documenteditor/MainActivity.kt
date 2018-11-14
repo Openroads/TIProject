@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val jsonParser = JsonParser()
 
+    private lateinit var documentListAdapter: DocumentListAdapter
+
     private lateinit var ws: WebSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,11 +67,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.string.navigation_drawer_close
         )
 
-        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "broadcast").build()
+        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "broadcast/").build()
 
         val listener = EchoWebSocketListener()
-        ws = client.newWebSocket(request, listener)
-
         ws = client.newWebSocket(request, listener)
 
 
@@ -110,8 +110,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onPostExecute(result: List<Document>?) {
             super.onPostExecute(result)
 
-            val adapter = DocumentListAdapter(this@MainActivity, result!!)
-            docListView.adapter = adapter
+            documentListAdapter = DocumentListAdapter(this@MainActivity, result!!.toMutableList())
+            docListView.adapter = documentListAdapter
 
             docListView.setOnItemClickListener { parent, view, position, id ->
                 val selectedDocument = result[position]
@@ -245,9 +245,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
 
                 LOCK -> {
-                    val documentId = operationData.get("id").asInt
-                    val editingBy = operationData.get("id").asString
-                    TODO()
+                    val documentId = operationData.get("documentId").asInt
+                    val editingBy = operationData.get("editingBy").asString
+                    Log.d(TAG, "LOCK document with id $documentId by $editingBy")
+                    runOnUiThread {
+                        documentListAdapter.lockDocument(documentId,editingBy)
+                    }
                 }
 
                 UNLOCK -> {
@@ -259,18 +262,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     TODO()
                 }
             }
-
-            runOnUiThread {
-                //                messages_view.setSelection(messages_view.count - 1)
-            }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            Log.i(DocumentEditingActivity.TAG, "Web socket echo closing: $code / $reason")
+            Log.i(TAG, "Web socket echo closing: $code / $reason")
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            Log.e(DocumentEditingActivity.TAG, "Web socket echo failure with response: $response", t)
+            Log.e(TAG, "Web socket echo failure with response: $response", t)
         }
     }
 

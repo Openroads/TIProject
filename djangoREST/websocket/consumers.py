@@ -1,6 +1,7 @@
+import json
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-import json
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -114,10 +115,10 @@ class BroadcastConsumer(WebsocketConsumer):
         )
 
     # Receive message from WebSocket
-    def receive(self, text_json_data):
-        received_json = json.loads(text_json_data)
+    def receive(self, text_data):
+        received_json = json.loads(text_data)
 
-        file_operation = received_json['file_operation']
+        file_operation = received_json['operation']
 
         print("File operation: " + file_operation)
 
@@ -134,19 +135,19 @@ class BroadcastConsumer(WebsocketConsumer):
         #     print("Unsupported file operation: " + file_operation)
 
 
-        # Send message to room group
+        # Send message to group ALL
         async_to_sync(self.channel_layer.group_send)(
             GROUP_NAME_ALL,
             {
-                'type': 'broadcast_file_operation_message',
-                'message': text_json_data
+                'type': 'chat_message',
+                'message': text_data
             }
         )
 
     # Receive message from room group
     def chat_message(self, event):
         message = event['message']
-        print("Received message from group " + message)
+        print("Received message from group[" + GROUP_NAME_ALL + "]" + message)
         # Send message to WebSocket
         self.send(message)
 
