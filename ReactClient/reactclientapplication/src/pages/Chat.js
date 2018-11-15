@@ -14,19 +14,27 @@ class Chat extends React.Component{
 
         // Create socketConnection
         const documentId = this.props.documentId;
-        this.socket = new WebSocket(`ws://localhost:8000/ws/chat/${documentId}/`);
+        this.socket = new WebSocket(`ws://localhost:8000/ws/chat/${documentId}`);
 
        this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
             var data = JSON.parse(e.data);
-            console.log(data);
             var userName = data['username'];
             var message = data['text'];
 
-            const msObject = {
+            
+            var msObject = {
                 username: userName,
-                message: message
+                message
             };
+
+            if(userName == this.props.username)
+            {
+                msObject.fromMe = true;
+            }
+            else{
+                msObject.fromMe = false;
+            }
 
             this.addMessage(msObject);
         };
@@ -39,15 +47,22 @@ class Chat extends React.Component{
     sendHandler(message){
         const messageObject = {
             username: this.props.username,
-            message
+            text: message
 
         };
 
-        // Send message via sockets
-       this.socket.send(messageObject);
         
-        messageObject.fromMe = true;
-        this.addMessage(messageObject);
+
+        var stringified = JSON.stringify(messageObject);
+        var test = '{"text": "hey odblokuj please", "username": "admin"}'
+        console.log(stringified);
+
+
+
+        // Send message via sockets
+       this.socket.send(stringified);
+        
+        // this.addMessage(messageObject);
     }
 
     addMessage(message){

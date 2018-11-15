@@ -30,6 +30,7 @@ class Dashboard extends React.Component
             idEditedDocument: '',
             editingBy: '',
             editingDocument: '',
+            idDocument: '',
             userName: sessionStorage.getItem('username'),
             userId: sessionStorage.getItem('userId')
         }
@@ -132,6 +133,7 @@ class Dashboard extends React.Component
     async handleSave(event){
 
         event.preventDefault();
+        
 
         if(this.state.isEditedByMe == undefined || this.state.editingBy == undefined || this.state.isEditedByMe == false)
         {
@@ -217,6 +219,7 @@ class Dashboard extends React.Component
 
         event.preventDefault();
         var respondedData;
+        this.setState({idDocument: event.target.id});
         const response = await axios.get(`http://localhost:8000/online-docs/document/${event.target.id}/`);
         this.setState({editingDocument: response.data});
         
@@ -352,7 +355,7 @@ class Dashboard extends React.Component
                         </Button>{" "}
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
-                    <Chat username = {this.state.userName} documentId = {this.state.idEditedDocument}/>
+                    <Chat username = {this.state.userName} documentId = {this.state.idDocument}/>
                     </Modal>
                 </div>
         );
