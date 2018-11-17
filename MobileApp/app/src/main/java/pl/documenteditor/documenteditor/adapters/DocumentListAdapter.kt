@@ -10,7 +10,7 @@ import android.widget.BaseAdapter
 import pl.documenteditor.documenteditor.R
 import pl.documenteditor.documenteditor.model.Document
 
-class DocumentListAdapter(val context: Context, val documentList : List<Document>) :BaseAdapter() {
+class DocumentListAdapter(val context: Context, val documentList : MutableList<Document>) :BaseAdapter() {
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view : View = LayoutInflater.from(context).inflate(R.layout.row_layout,parent,false)
 
@@ -27,7 +27,7 @@ class DocumentListAdapter(val context: Context, val documentList : List<Document
         return view
     }
 
-    override fun getItem(position: Int): Any {
+    override fun getItem(position: Int): Document {
         return documentList[position]
     }
 
@@ -38,4 +38,29 @@ class DocumentListAdapter(val context: Context, val documentList : List<Document
     override fun getCount(): Int {
         return documentList.size
     }
+
+    fun add(document: Document) {
+        this.documentList.add(document)
+        notifyDataSetChanged() // to render the list we need to notify
+    }
+
+    fun lockDocument(documentId:Int, username:String) {
+        this.documentList.find { document -> document.id == documentId }
+            ?.editingBy = username
+        notifyDataSetChanged()
+    }
+
+    fun unlockDocument(documentId: Int) {
+        this.documentList.find { document -> document.id == documentId }
+            ?.editingBy = null
+        notifyDataSetChanged()
+    }
+
+    fun deleteDocument(documentId: Int) {
+        val doc = this.documentList.find { document -> document.id == documentId }
+        this.documentList.remove(doc)
+        notifyDataSetChanged()
+    }
+
+
 }

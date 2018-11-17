@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.app_bar_main2.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.*
+import org.json.JSONObject
 import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
@@ -27,6 +28,12 @@ import pl.documenteditor.documenteditor.model.Operation
 import pl.documenteditor.documenteditor.model.Operation.*
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
+import pl.documenteditor.documenteditor.utils.Constants.Companion.NORMAL_CLOSURE_SOCKET_STATUS
+import pl.documenteditor.documenteditor.utils.JsonUtils
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DATA_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_ID_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.OPERATION_PROPERTY
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -41,6 +48,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val gson = Gson()
 
     private val jsonParser = JsonParser()
+
+    private lateinit var documentListAdapter: DocumentListAdapter
 
     private lateinit var ws: WebSocket
 
@@ -65,13 +74,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             R.string.navigation_drawer_close
         )
 
-        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "broadcast").build()
+        val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "broadcast/").build()
 
         val listener = EchoWebSocketListener()
         ws = client.newWebSocket(request, listener)
-
-        ws = client.newWebSocket(request, listener)
-
 
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
@@ -81,12 +87,23 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         updateButton.setOnClickListener {
             AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
         }
+
+        docListView.setOnItemClickListener { parent, view, position, id ->
+            val selectedDocument = documentListAdapter.getItem(position)
+            sendIntentToDocumentEditing(user!!, selectedDocument)
+        }
     }
 
     override fun onStart() {
         super.onStart()
         AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
     }
+
+    override fun onDestroy() {
+        ws.close(NORMAL_CLOSURE_SOCKET_STATUS, "Main activity destroyed")
+        super.onDestroy()
+    }
+
 
     inner class AsyncTaskHandleRestApi : AsyncTask<String, String, List<Document>>() {
 
@@ -110,13 +127,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onPostExecute(result: List<Document>?) {
             super.onPostExecute(result)
 
-            val adapter = DocumentListAdapter(this@MainActivity, result!!)
-            docListView.adapter = adapter
-
-            docListView.setOnItemClickListener { parent, view, position, id ->
-                val selectedDocument = result[position]
-                sendIntentToDocumentEditing(user!!, selectedDocument)
-            }
+            documentListAdapter = DocumentListAdapter(this@MainActivity, result!!.toMutableList())
+            docListView.adapter = documentListAdapter
         }
     }
 
@@ -190,22 +202,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Log.d(TAG, "Main Json           " + toJson)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/documents/")
-                    .post(RequestBody.create(Constants.JSON, toJson))
+                    .post(RequestBody.create(JsonUtils.JSON, toJson))
                     .build()
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     val responseBody = response.body()?.string()
                     Log.d(TAG, "Response body: " + responseBody)
-                    val dok = Gson().fromJson(responseBody, Document::class.java)
-                    Log.d(TAG, "lOG DIAGNOSTYCZNY: ")
-                    return dok
+                    val newCreatedDocument = Gson().fromJson(responseBody, Document::class.java)
+
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.ADD)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_PROPERTY, responseBody)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+
+                    ws.send(asString)
+
+                    return newCreatedDocument
                 }
 
             } catch (ex: Exception) {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
             return null
-
         }
 
         override fun onPostExecute(result: Document?) {
@@ -234,43 +254,51 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onMessage(webSocket: WebSocket, text: String) {
             Log.d(DocumentEditingActivity.TAG, "Receiving echo message : $text")
             val receivedJson = jsonParser.parse(text).asJsonObject
-            val operation = Operation.valueOf(receivedJson.get("operation").asString)
-            val operationData = receivedJson.get("data").asJsonObject
+            val operation = Operation.valueOf(receivedJson.get(OPERATION_PROPERTY).asString)
+            val operationData = receivedJson.get(DATA_PROPERTY).asJsonObject
 
             when (operation) {
                 ADD -> {
-
-                    val doc = gson.fromJson(operationData.asString, Document::class.java)
-                    TODO()
+                    val doc = gson.fromJson(operationData.get(DOCUMENT_PROPERTY).asString, Document::class.java)
+                    Log.d(TAG, "ADD  document with id $doc")
+                    runOnUiThread {
+                        documentListAdapter.add(doc)
+                        documentListAdapter.notifyDataSetChanged()
+                    }
                 }
 
                 LOCK -> {
-                    val documentId = operationData.get("id").asInt
-                    val editingBy = operationData.get("id").asString
-                    TODO()
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
+                    val editingBy = operationData.get("editingBy").asString
+                    Log.d(TAG, "LOCK document with id $documentId by $editingBy")
+                    runOnUiThread {
+                        documentListAdapter.lockDocument(documentId, editingBy)
+                    }
                 }
 
                 UNLOCK -> {
-                    val documentId = operationData.get("id").asInt
-                    TODO()
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
+                    Log.d(TAG, "UNLOCK document with id $documentId")
+                    runOnUiThread {
+                        documentListAdapter.unlockDocument(documentId)
+                    }
                 }
                 DELETE -> {
-                    val documentId = operationData.get("id").asInt
-                    TODO()
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
+                    Log.d(TAG, "Delete document with id $documentId")
+                    runOnUiThread {
+                        documentListAdapter.deleteDocument(documentId)
+                    }
                 }
-            }
-
-            runOnUiThread {
-                //                messages_view.setSelection(messages_view.count - 1)
             }
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-            Log.i(DocumentEditingActivity.TAG, "Web socket echo closing: $code / $reason")
+            Log.i(TAG, "Web socket echo closing: $code / $reason")
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-            Log.e(DocumentEditingActivity.TAG, "Web socket echo failure with response: $response", t)
+            Log.e(TAG, "Web socket echo failure with response: $response", t)
         }
     }
 

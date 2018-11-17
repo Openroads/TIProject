@@ -9,11 +9,18 @@ import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
 import okhttp3.*
+import org.json.JSONObject
 import pl.documenteditor.documenteditor.adapters.MessageAdapter
 import pl.documenteditor.documenteditor.model.Document
 import pl.documenteditor.documenteditor.model.Message
+import pl.documenteditor.documenteditor.model.Operation
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
+import pl.documenteditor.documenteditor.utils.Constants.Companion.NORMAL_CLOSURE_SOCKET_STATUS
+import pl.documenteditor.documenteditor.utils.JsonUtils
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DATA_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_ID_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.OPERATION_PROPERTY
 
 
 class DocumentEditingActivity : AppCompatActivity() {
@@ -28,7 +35,9 @@ class DocumentEditingActivity : AppCompatActivity() {
 
     private val messageGson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
-    private lateinit var ws: WebSocket
+    private lateinit var wsChat: WebSocket
+
+    private lateinit var wsBroadcast: WebSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,10 +59,13 @@ class DocumentEditingActivity : AppCompatActivity() {
 
         val request = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "chat/" + document?.id).build()
         val listener = ChatWebSocketListener()
-        ws = client.newWebSocket(request, listener)
+        wsChat = client.newWebSocket(request, listener)
+
+        val wsBroadcastRequest = Request.Builder().url(Constants.WEB_SOCKET_ADDRESS + "broadcast/").build()
+        wsBroadcast = client.newWebSocket(wsBroadcastRequest, BroadcastWebSocketListener())
 
         send_button.setOnClickListener {
-            sendMessage(ws)
+            sendMessage(wsChat)
         }
         buttonCancel.setOnClickListener {
             onBackPressed()
@@ -95,13 +107,13 @@ class DocumentEditingActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        ws.close(NORMAL_CLOSURE_STATUS, "Activity destroyed")
+        wsChat.close(NORMAL_CLOSURE_SOCKET_STATUS, "Activity destroyed")
         super.onDestroy()
     }
 
     companion object {
         const val TAG: String = "DocumentEditingActivity" // ODE - online document editor
-        const val NORMAL_CLOSURE_STATUS = 1000
+
     }
 
     private inner class ChatWebSocketListener : WebSocketListener() {
@@ -148,6 +160,15 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val response = OkHttpClient().newCall(requestBlock).execute()
 
                 if (response.isSuccessful) {
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.UNLOCK)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+                    val send = wsBroadcast.send(asString)
+                    Log.i(TAG, "Send unlock status: $send")
+                    wsBroadcast.close(NORMAL_CLOSURE_SOCKET_STATUS, "Activity destroyed")
                     return true
                 }
 
@@ -155,7 +176,6 @@ class DocumentEditingActivity : AppCompatActivity() {
                 Log.e(TAG, "Cant get data from rest api server", ex)
             }
             return false
-
         }
 
         override fun onPostExecute(result: Boolean) {
@@ -175,8 +195,15 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val response = OkHttpClient().newCall(requestLock).execute()
 
                 if (response.isSuccessful) {
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.LOCK)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
+                    dataRootObject.put("editingBy", user.username)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+                    wsBroadcast.send(asString)
                     return true
-
                 }
             } catch (ex: Exception) {
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
@@ -200,6 +227,13 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.DELETE)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+                    wsBroadcast.send(asString)
                     return true
                 }
             } catch (ex: Exception) {
@@ -235,7 +269,7 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val toJson = gson.toJson(document)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + '/')
-                    .put(RequestBody.create(Constants.JSON, toJson))
+                    .put(RequestBody.create(JsonUtils.JSON, toJson))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
@@ -294,38 +328,25 @@ class DocumentEditingActivity : AppCompatActivity() {
             this@DocumentEditingActivity.title = document!!.title
 
         }
+    }
 
-        inner class GetDocumentDetailsTask : AsyncTask<String, String, Document>() {
+    private inner class BroadcastWebSocketListener : WebSocketListener() {
 
-            override fun doInBackground(vararg url: String?): Document? {
-
-                try {
-                    val requestBlock = Request.Builder()
-                        .url(url[1])
-                        .post(RequestBody.create(null, ""))
-                        .build()
-                    val response2 = OkHttpClient().newCall(requestBlock).execute()
-                    println("*****Response: " + response2)
-                    if (response2.isSuccessful) {
-
-                        val request = Request.Builder().url(url[0]).build()
-                        val response = OkHttpClient().newCall(request).execute()
-                        val string = response.body()?.string()
-                        return GsonBuilder().create().fromJson(string, Document::class.java)
-                    }
-                } catch (ex: Exception) {
-                    Log.e(MainActivity.TAG, "Cant get data from rest api server", ex)
-                }
-                return null
-            }
-
-            override fun onPostExecute(result: Document?) {
-                super.onPostExecute(result)
-                document = result ?: document
-                documentContext.setText(document!!.content)
-                this@DocumentEditingActivity.title = document!!.title
-            }
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            Log.i(TAG, "BroadcastWebSocketListener echo on open")
         }
 
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            Log.d(TAG, "BroadcastWebSocketListener receiving message : $text")
+
+        }
+
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            Log.i(TAG, "BroadcastWebSocketListener socket closing: $code / $reason")
+        }
+
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            Log.e(TAG, "BroadcastWebSocketListener  failure with response: $response", t)
+        }
     }
 }
