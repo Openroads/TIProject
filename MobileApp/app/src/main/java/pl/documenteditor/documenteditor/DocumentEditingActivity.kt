@@ -227,6 +227,13 @@ class DocumentEditingActivity : AppCompatActivity() {
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.DELETE)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+                    wsBroadcast.send(asString)
                     return true
                 }
             } catch (ex: Exception) {

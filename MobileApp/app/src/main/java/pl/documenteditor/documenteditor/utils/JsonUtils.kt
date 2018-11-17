@@ -12,6 +12,8 @@ class JsonUtils {
 
         const val DATA_PROPERTY = "data"
 
+        const val DOCUMENT_PROPERTY = "document"
+
         const val DOCUMENT_ID_PROPERTY = "documentId"
 
     }

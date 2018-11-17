@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.app_bar_main2.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.*
+import org.json.JSONObject
 import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
@@ -31,6 +32,7 @@ import pl.documenteditor.documenteditor.utils.Constants.Companion.NORMAL_CLOSURE
 import pl.documenteditor.documenteditor.utils.JsonUtils
 import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DATA_PROPERTY
 import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_ID_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_PROPERTY
 import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.OPERATION_PROPERTY
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -206,9 +208,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 if (response.isSuccessful) {
                     val responseBody = response.body()?.string()
                     Log.d(TAG, "Response body: " + responseBody)
-                    val dok = Gson().fromJson(responseBody, Document::class.java)
-                    Log.d(TAG, "lOG DIAGNOSTYCZNY: ")
-                    return dok
+                    val newCreatedDocument = Gson().fromJson(responseBody, Document::class.java)
+
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.ADD)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_PROPERTY, responseBody)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+
+                    ws.send(asString)
+
+                    return newCreatedDocument
                 }
 
             } catch (ex: Exception) {
@@ -248,9 +259,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             when (operation) {
                 ADD -> {
-
-                    val doc = gson.fromJson(operationData.asString, Document::class.java)
-                    TODO()
+                    val doc = gson.fromJson(operationData.get(DOCUMENT_PROPERTY).asString, Document::class.java)
+                    Log.d(TAG, "ADD  document with id $doc")
+                    runOnUiThread {
+                        documentListAdapter.add(doc)
+                        documentListAdapter.notifyDataSetChanged()
+                    }
                 }
 
                 LOCK -> {
@@ -270,8 +284,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     }
                 }
                 DELETE -> {
-                    val documentId = operationData.get("id").asInt
-                    TODO()
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
+                    Log.d(TAG, "Delete document with id $documentId")
+                    runOnUiThread {
+                        documentListAdapter.deleteDocument(documentId)
+                    }
                 }
             }
         }

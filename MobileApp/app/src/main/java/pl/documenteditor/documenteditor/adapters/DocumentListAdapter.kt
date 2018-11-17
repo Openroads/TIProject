@@ -56,5 +56,11 @@ class DocumentListAdapter(val context: Context, val documentList : MutableList<D
         notifyDataSetChanged()
     }
 
+    fun deleteDocument(documentId: Int) {
+        val doc = this.documentList.find { document -> document.id == documentId }
+        this.documentList.remove(doc)
+        notifyDataSetChanged()
+    }
+
 
 }
