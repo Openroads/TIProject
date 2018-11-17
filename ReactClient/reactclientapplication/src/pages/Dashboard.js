@@ -229,8 +229,8 @@ class Dashboard extends React.Component
             this.toggle();
         }
         else {
-            this.toggle();
             this.setState({fileTitle: data.title, fileContent: data.content, idEditedDocument: data.id, isEditedByMe: false});
+            this.toggle();
             this.disableViewWhenEditing();
             
         }

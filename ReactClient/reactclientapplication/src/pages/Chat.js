@@ -14,7 +14,7 @@ class Chat extends React.Component{
         this.sendHandler = this.sendHandler.bind(this);
 
         // Create socketConnection
-        const documentId = this.props.documentId;
+        const documentId = props.documentId;
         this.socket = new WebSocket(`${Constants.WebSocket.Chat}/${documentId}`);
 
         this.socket.onmessage = e => {
