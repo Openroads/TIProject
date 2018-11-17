@@ -27,6 +27,11 @@ import pl.documenteditor.documenteditor.model.Operation
 import pl.documenteditor.documenteditor.model.Operation.*
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
+import pl.documenteditor.documenteditor.utils.Constants.Companion.NORMAL_CLOSURE_SOCKET_STATUS
+import pl.documenteditor.documenteditor.utils.JsonUtils
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DATA_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_ID_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.OPERATION_PROPERTY
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -72,7 +77,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val listener = EchoWebSocketListener()
         ws = client.newWebSocket(request, listener)
 
-
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
 
@@ -87,6 +91,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         super.onStart()
         AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
     }
+
+    override fun onDestroy() {
+        ws.close(NORMAL_CLOSURE_SOCKET_STATUS, "Main activity destroyed")
+        super.onDestroy()
+    }
+
 
     inner class AsyncTaskHandleRestApi : AsyncTask<String, String, List<Document>>() {
 
@@ -190,7 +200,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Log.d(TAG, "Main Json           " + toJson)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/documents/")
-                    .post(RequestBody.create(Constants.JSON, toJson))
+                    .post(RequestBody.create(JsonUtils.JSON, toJson))
                     .build()
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
@@ -205,7 +215,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 Log.e(DocumentEditingActivity.TAG, "Cant get data from rest api server", ex)
             }
             return null
-
         }
 
         override fun onPostExecute(result: Document?) {
@@ -234,8 +243,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onMessage(webSocket: WebSocket, text: String) {
             Log.d(DocumentEditingActivity.TAG, "Receiving echo message : $text")
             val receivedJson = jsonParser.parse(text).asJsonObject
-            val operation = Operation.valueOf(receivedJson.get("operation").asString)
-            val operationData = receivedJson.get("data").asJsonObject
+            val operation = Operation.valueOf(receivedJson.get(OPERATION_PROPERTY).asString)
+            val operationData = receivedJson.get(DATA_PROPERTY).asJsonObject
 
             when (operation) {
                 ADD -> {
@@ -245,17 +254,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 }
 
                 LOCK -> {
-                    val documentId = operationData.get("documentId").asInt
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
                     val editingBy = operationData.get("editingBy").asString
                     Log.d(TAG, "LOCK document with id $documentId by $editingBy")
                     runOnUiThread {
-                        documentListAdapter.lockDocument(documentId,editingBy)
+                        documentListAdapter.lockDocument(documentId, editingBy)
                     }
                 }
 
                 UNLOCK -> {
-                    val documentId = operationData.get("id").asInt
-                    TODO()
+                    val documentId = operationData.get(DOCUMENT_ID_PROPERTY).asInt
+                    Log.d(TAG, "UNLOCK document with id $documentId")
+                    runOnUiThread {
+                        documentListAdapter.unlockDocument(documentId)
+                    }
                 }
                 DELETE -> {
                     val documentId = operationData.get("id").asInt

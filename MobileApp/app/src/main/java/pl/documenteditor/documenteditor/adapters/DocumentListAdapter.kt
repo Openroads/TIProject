@@ -47,7 +47,13 @@ class DocumentListAdapter(val context: Context, val documentList : MutableList<D
     fun lockDocument(documentId:Int, username:String) {
         this.documentList.find { document -> document.id == documentId }
             ?.editingBy = username
-        notifyDataSetChanged() // to render the list we need to notify
+        notifyDataSetChanged()
+    }
+
+    fun unlockDocument(documentId: Int) {
+        this.documentList.find { document -> document.id == documentId }
+            ?.editingBy = null
+        notifyDataSetChanged()
     }
 
 

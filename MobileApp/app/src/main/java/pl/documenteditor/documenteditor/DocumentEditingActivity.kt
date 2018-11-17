@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import kotlinx.android.synthetic.main.activity_document_editing.*
 import kotlinx.android.synthetic.main.content_document_editing.*
 import okhttp3.*
@@ -17,6 +16,11 @@ import pl.documenteditor.documenteditor.model.Message
 import pl.documenteditor.documenteditor.model.Operation
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
+import pl.documenteditor.documenteditor.utils.Constants.Companion.NORMAL_CLOSURE_SOCKET_STATUS
+import pl.documenteditor.documenteditor.utils.JsonUtils
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DATA_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.DOCUMENT_ID_PROPERTY
+import pl.documenteditor.documenteditor.utils.JsonUtils.Companion.OPERATION_PROPERTY
 
 
 class DocumentEditingActivity : AppCompatActivity() {
@@ -32,6 +36,7 @@ class DocumentEditingActivity : AppCompatActivity() {
     private val messageGson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
     private lateinit var wsChat: WebSocket
+
     private lateinit var wsBroadcast: WebSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,13 +107,13 @@ class DocumentEditingActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        wsChat.close(NORMAL_CLOSURE_STATUS, "Activity destroyed")
+        wsChat.close(NORMAL_CLOSURE_SOCKET_STATUS, "Activity destroyed")
         super.onDestroy()
     }
 
     companion object {
         const val TAG: String = "DocumentEditingActivity" // ODE - online document editor
-        const val NORMAL_CLOSURE_STATUS = 1000
+
     }
 
     private inner class ChatWebSocketListener : WebSocketListener() {
@@ -155,6 +160,15 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val response = OkHttpClient().newCall(requestBlock).execute()
 
                 if (response.isSuccessful) {
+                    val rootObject = JSONObject()
+                    rootObject.put(OPERATION_PROPERTY, Operation.UNLOCK)
+                    val dataRootObject = JSONObject()
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
+                    val asString = rootObject.toString()
+                    val send = wsBroadcast.send(asString)
+                    Log.i(TAG, "Send unlock status: $send")
+                    wsBroadcast.close(NORMAL_CLOSURE_SOCKET_STATUS, "Activity destroyed")
                     return true
                 }
 
@@ -162,7 +176,6 @@ class DocumentEditingActivity : AppCompatActivity() {
                 Log.e(TAG, "Cant get data from rest api server", ex)
             }
             return false
-
         }
 
         override fun onPostExecute(result: Boolean) {
@@ -183,11 +196,11 @@ class DocumentEditingActivity : AppCompatActivity() {
 
                 if (response.isSuccessful) {
                     val rootObject = JSONObject()
-                    rootObject.put("operation", Operation.LOCK)
+                    rootObject.put(OPERATION_PROPERTY, Operation.LOCK)
                     val dataRootObject = JSONObject()
-                    dataRootObject.put("documentId", document?.id)
+                    dataRootObject.put(DOCUMENT_ID_PROPERTY, document?.id)
                     dataRootObject.put("editingBy", user.username)
-                    rootObject.put("data", dataRootObject)
+                    rootObject.put(DATA_PROPERTY, dataRootObject)
                     val asString = rootObject.toString()
                     wsBroadcast.send(asString)
                     return true
@@ -249,7 +262,7 @@ class DocumentEditingActivity : AppCompatActivity() {
                 val toJson = gson.toJson(document)
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/document/" + document?.id + '/')
-                    .put(RequestBody.create(Constants.JSON, toJson))
+                    .put(RequestBody.create(JsonUtils.JSON, toJson))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
                 if (response.isSuccessful) {

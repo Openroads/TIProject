@@ -25,12 +25,12 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_login.*
-import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
+import pl.documenteditor.documenteditor.utils.JsonUtils
 import java.util.*
 
 /**
@@ -264,7 +264,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 val gson = Gson()
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/users/login/")
-                    .post(RequestBody.create(Constants.JSON, gson.toJson(user)))
+                    .post(RequestBody.create(JsonUtils.JSON, gson.toJson(user)))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
 
