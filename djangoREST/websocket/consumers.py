@@ -114,12 +114,12 @@ class BroadcastConsumer(WebsocketConsumer):
         )
 
     # Receive message from WebSocket
-    def receive(self, text_json_data):
-        received_json = json.loads(text_json_data)
+    def receive(self, text_data):
+        received_json = json.loads(text_data)
 
-        file_operation = received_json['file_operation']
+        # file_operation = received_json['file_operation']
 
-        print("File operation: " + file_operation)
+        # print("File operation: " + file_operation)
 
         # make operation in database for each file operation
         # if file_operation == 'lock-file':
@@ -139,16 +139,16 @@ class BroadcastConsumer(WebsocketConsumer):
             GROUP_NAME_ALL,
             {
                 'type': 'broadcast_file_operation_message',
-                'message': text_json_data
+                'message': received_json
             }
         )
 
     # Receive message from room group
-    def chat_message(self, event):
+    def broadcast_file_operation_message(self, event):
         message = event['message']
-        print("Received message from group " + message)
+        print("Received message from group " + str(message))
         # Send message to WebSocket
-        self.send(message)
+        self.send(text_data=json.dumps(message))
 
 
 class HelloConsumer(WebsocketConsumer):

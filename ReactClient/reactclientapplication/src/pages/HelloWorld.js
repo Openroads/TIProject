@@ -7,7 +7,7 @@ import {
     CardBody,
   } from "mdbreact";
   import axios from 'axios';
-  import SockJS from 'sockjs-client';
+  import Constants from './../Constants';
 
 class HelloWorld extends React.Component {
     constructor(props){
@@ -20,7 +20,7 @@ class HelloWorld extends React.Component {
         };
 
         // Create socket connection
-        this.socket = new WebSocket('ws://localhost:8000/ws/say-hello/');
+        this.socket = new WebSocket(Constants.WebSocket.HelloWorld);
 
         this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
@@ -52,7 +52,7 @@ class HelloWorld extends React.Component {
     handleSubmit(event)
     {
         event.preventDefault();
-        axios.get(`http://localhost:8000/hello-api/by-name/${this.state.inputUserName}`)
+        axios.get(`${Constants.Rest.HelloWorld}/${this.state.inputUserName}`)
         .then(response => alert(response.data))
     }
 

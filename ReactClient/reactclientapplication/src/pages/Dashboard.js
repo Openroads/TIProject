@@ -15,6 +15,7 @@ import DocumentList from './DocumentList';
 import axios from 'axios';
 import avatar from '../Images/img_avatar.png';
 import Chat from './Chat';
+import Constants from './../Constants';
 
 class Dashboard extends React.Component 
 {
@@ -30,10 +31,11 @@ class Dashboard extends React.Component
             idEditedDocument: '',
             editingBy: '',
             editingDocument: '',
-            idDocument: '',
             userName: sessionStorage.getItem('username'),
             userId: sessionStorage.getItem('userId')
         }
+
+        
 
         this.handleChange = this.handleChange.bind(this);
         this.toggle = this.toggle.bind(this);
@@ -44,14 +46,21 @@ class Dashboard extends React.Component
         this.disableViewWhenEditing = this.disableViewWhenEditing.bind(this);
         this.deleteDocument = this.deleteDocument.bind(this);
         this.canDelete = this.canDelete.bind(this);
-        this.handleDocumentClick = this.handleDocumentClick.bind(this);
+        this.isNewDocument = this.isNewDocument.bind(this);
+        this.onDocumentClicked = this.onDocumentClicked.bind(this);
+        this.addDocument = this.addDocument.bind(this);
         this.getDocuments();
+
+        this.socketBroadcast = new WebSocket(Constants.WebSocket.Broadcast);
+        this.socketBroadcast.onmessage = e => {}
     }
 
     async getDocuments()
     {
-        const response = await axios.get('http://localhost:8000/online-docs/documents/');
-        this.setState({documents: response.data})
+        const response = await axios.get(`${Constants.Rest.Documents}`);
+        this.setState({documents: response.data});
+
+        return response.data;
     }
 
     handleChange = event => {
@@ -88,7 +97,7 @@ class Dashboard extends React.Component
 
     async endEditing()
     {
-        var domain = "http://localhost:8000/online-docs/document/";
+        var domain = `${Constants.Rest.Document}`;
         var id = this.state.idEditedDocument.toString();
         var endOf = "/stop-editing/";
         var address = domain.concat(id, endOf);
@@ -98,6 +107,16 @@ class Dashboard extends React.Component
         console.log("End editing: ", response);
 
         this.setState({isEditedByMe: false});
+
+        var unlockObject = {
+            operation: "UNLOCK",
+            data: {
+                documentId: id
+            }
+        }
+
+        var stringUnlockObject = JSON.stringify(unlockObject);
+        this.socketBroadcast.send(stringUnlockObject);
     }
 
     resetInput(){
@@ -108,7 +127,7 @@ class Dashboard extends React.Component
 
     async deleteDocument(event){
         event.preventDefault();
-        const response = await axios.delete(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+        const response = await axios.delete(`${Constants.Rest.Document}${this.state.idEditedDocument}/`, {
                 
                     title: this.state.fileTitle,
                     content: this.state.fileContent,
@@ -117,15 +136,16 @@ class Dashboard extends React.Component
                 
             });
         console.log("Deleted: ", response);
-
         
+        var deleteObject = {
+            operation: "DELETE",
+            data: {
+                documentId: this.state.idEditedDocument
+            }
+        }
 
-        // removing from the list
-        const newState = this.state;
-        const deletedIndex = newState.documents.findIndex(x => x.id == newState.idEditedDocument);
-        if(deletedIndex == -1) return;
-        newState.documents.splice(deletedIndex, 1);
-        this.setState(newState);
+        var stringDeleteObject = JSON.stringify(deleteObject);
+        this.socketBroadcast.send(stringDeleteObject);
 
         this.toggle();
     }
@@ -134,22 +154,19 @@ class Dashboard extends React.Component
 
         event.preventDefault();
         
-
-        if(this.state.isEditedByMe == undefined || this.state.editingBy == undefined || this.state.isEditedByMe == false)
+        if(this.isNewDocument())
         {
-            axios.post('http://localhost:8000/online-docs/documents/', {
+            axios.post(`${Constants.Rest.Documents}`, {
                 title: this.state.fileTitle,
                 content: this.state.fileContent,
             })
-            .then(response => this.setState({documents: [...this.state.documents, response.data]}))
+            .then(response => this.addDocument(response))
             .catch(function (error) {
                 console.log(error);
-            });   
-            
-            
+            });     
         }
         else{
-           const response = await axios.put(`http://localhost:8000/online-docs/document/${this.state.idEditedDocument}/`, {
+           const response = await axios.put(`${Constants.Rest.Document}${this.state.idEditedDocument}/`, {
                 
                     title: this.state.fileTitle,
                     content: this.state.fileContent,
@@ -157,24 +174,40 @@ class Dashboard extends React.Component
             });
 
            console.log("Updated: ", response);
-           
-           const newState = this.state;
-           axios.get('http://localhost:8000/online-docs/documents/')
-            .then(response => {newState.documents = response.data})
-
-            
-            this.setState(newState);
+           this.getDocuments();
         }
 
         this.toggle();
         
     }
 
+    addDocument(response)
+    {
+        var addedObject = {
+            operation: "ADD",
+            data: {
+                document: response.data
+            }
+        }
+
+        var stringAddedObject = JSON.stringify(addedObject);
+        this.socketBroadcast.send(stringAddedObject);
+    }
+
+    isNewDocument(){
+        if(this.state.isEditedByMe == undefined || this.state.editingBy == undefined || this.state.isEditedByMe == false)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     disableViewWhenEditing(){
         var textArea = document.getElementById("fileContent");
         var saveButton = document.getElementById("saveButton");
 
-        if(this.state.editingBy != ""){
+        if(this.state.isEditedByMe == false){
             textArea.disabled = true;
             saveButton.disabled = true;
 
@@ -185,89 +218,23 @@ class Dashboard extends React.Component
         }
     }
 
-    documentCallback = (dataFromCallback) => {
-        let title = dataFromCallback.title;
-        let content = dataFromCallback.content;
-        let id = dataFromCallback.id;
-        let editingby = dataFromCallback.editingBy;
+    onDocumentClicked(documentData) {
+        var data = documentData.data;
 
-        // Callback when clickin position on the list
-        if(title !== "" && content !== "" && title !== undefined && content !== undefined && id != "")
+        var editedBy = data.editingBy;
+
+        if(editedBy == undefined || editedBy == "")
         {
-            if(editingby == undefined || editingby == ""){
-                axios.post(`http://localhost:8000/online-docs/document/${id}`+ '/editing-by/1/', {
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded' }
-                })
-                .then(response => console.log("Editing: ", response))
-                .catch(function (error) {
-                    console.log(error);
-                });
-
-                this.setState({fileTitle: title, fileContent: content, idEditedDocument: id, isEditedByMe: true});
-                this.toggle();
-            }
-            else{
-                this.setState({fileTitle: title, fileContent: content, editingBy: editingby});
-                this.toggle();
-                this.disableViewWhenEditing();
-            }
+            this.setState({fileTitle: data.title, fileContent: data.content, idEditedDocument: data.id, isEditedByMe: true});
+            this.toggle();
+        }
+        else {
+            this.toggle();
+            this.setState({fileTitle: data.title, fileContent: data.content, idEditedDocument: data.id, isEditedByMe: false});
+            this.disableViewWhenEditing();
             
         }
     }
-
-    async handleDocumentClick(event) {
-
-        event.preventDefault();
-        var respondedData;
-        this.setState({idDocument: event.target.id});
-        const response = await axios.get(`http://localhost:8000/online-docs/document/${event.target.id}/`);
-        this.setState({editingDocument: response.data});
-        
-        let title = this.state.editingDocument.title;
-        let content = this.state.editingDocument.content;
-        let id = this.state.editingDocument.id;
-        let editingby = this.state.editingDocument.editingBy;
-
-        // Callback when clickin position on the list
-        if(title !== "" && content !== "" && title !== undefined && content !== undefined && id != "")
-        {
-            if(editingby == undefined || editingby == ""){
-                const editResponse = await axios.post(`http://localhost:8000/online-docs/document/${id}`+ '/editing-by/1/', {
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded' }
-                });
-
-                console.log("Editing: ", editResponse.data)
-
-                this.setState({fileTitle: title, fileContent: content, idEditedDocument: id, isEditedByMe: true});
-                this.toggle();
-            }
-            else{
-                this.toggle();
-                this.setState({fileTitle: title, fileContent: content, editingBy: editingby});
-                
-                this.disableViewWhenEditing();
-            }
-            
-            
-            
-        }
-    }
-
-    isModifing(doc)
-    {
-        if(doc.editingBy == undefined)
-        {
-            return '';
-        }
-        if(doc.editingBy.length > 0)
-        {
-            return 'fa fa-lock lockList';
-        }
-        else{
-            return '';
-        }
-    }
-
 
     render()
     {
@@ -307,20 +274,10 @@ class Dashboard extends React.Component
                                     </div>
                                     </div>
                                     <div className="row">
-
-                                        <div className="documentList">
-                                        {
-                                            this.state.documents.map(doc => {
-                                            return(
-                                                <li id={doc.id} onClick={this.handleDocumentClick} className="list-group-item list-group-item-action listWidth" key={doc.id}>
-                                                {doc.title}
-                                                <i className={this.isModifing(doc)} aria-hidden="true">  {doc.editingBy}</i>
-                                                </li>
-                                                );
-                                            })
-                                        }
-                                        </div>
-                                </div>
+                                    
+                                        <DocumentList Documents = {this.state.documents} onElementClicked = {this.onDocumentClicked} UserId = {this.state.userId} UserName = {this.state.userName} EditedDocument = {this.state.idEditedDocument}/>
+                                        
+                                    </div>
 
                             </div>
                        
@@ -355,7 +312,7 @@ class Dashboard extends React.Component
                         </Button>{" "}
                         <Button id="saveButton" color="primary" onClick={(event) => this.handleSave(event)}>Save</Button>
                     </ModalFooter>
-                    <Chat username = {this.state.userName} documentId = {this.state.idDocument}/>
+                     <Chat username = {this.state.userName} documentId = {this.state.idEditedDocument}/>
                     </Modal>
                 </div>
         );

@@ -2,6 +2,7 @@ import React from 'react';
 import Messages from './Messages';
 import ChatInput from './ChatInput';
 import './Chat.css';
+import Constants from './../Constants';
 
 class Chat extends React.Component{
     constructor(props){
@@ -14,9 +15,9 @@ class Chat extends React.Component{
 
         // Create socketConnection
         const documentId = this.props.documentId;
-        this.socket = new WebSocket(`ws://localhost:8000/ws/chat/${documentId}`);
+        this.socket = new WebSocket(`${Constants.WebSocket.Chat}/${documentId}`);
 
-       this.socket.onmessage = e => {
+        this.socket.onmessage = e => {
             console.log('Message received: ', e.data);
             var data = JSON.parse(e.data);
             var userName = data['username'];
@@ -51,18 +52,9 @@ class Chat extends React.Component{
 
         };
 
-        
-
         var stringified = JSON.stringify(messageObject);
-        var test = '{"text": "hey odblokuj please", "username": "admin"}'
         console.log(stringified);
-
-
-
-        // Send message via sockets
-       this.socket.send(stringified);
-        
-        // this.addMessage(messageObject);
+        this.socket.send(stringified);
     }
 
     addMessage(message){
@@ -70,6 +62,10 @@ class Chat extends React.Component{
         const messages = this.state.messages;
         messages.push(message);
         this.setState({messages});
+    }
+
+    componentWillUnmount(){
+        this.socket.close();
     }
 
     render(){
