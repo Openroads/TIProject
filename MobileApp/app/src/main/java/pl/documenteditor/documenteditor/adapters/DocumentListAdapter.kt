@@ -27,7 +27,7 @@ class DocumentListAdapter(val context: Context, val documentList : MutableList<D
         return view
     }
 
-    override fun getItem(position: Int): Any {
+    override fun getItem(position: Int): Document {
         return documentList[position]
     }
 

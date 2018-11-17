@@ -87,6 +87,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         updateButton.setOnClickListener {
             AsyncTaskHandleRestApi().execute(DOCUMENT_LIST_REST_ENDPOINT)
         }
+
+        docListView.setOnItemClickListener { parent, view, position, id ->
+            val selectedDocument = documentListAdapter.getItem(position)
+            sendIntentToDocumentEditing(user!!, selectedDocument)
+        }
     }
 
     override fun onStart() {
@@ -124,11 +129,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             documentListAdapter = DocumentListAdapter(this@MainActivity, result!!.toMutableList())
             docListView.adapter = documentListAdapter
-
-            docListView.setOnItemClickListener { parent, view, position, id ->
-                val selectedDocument = result[position]
-                sendIntentToDocumentEditing(user!!, selectedDocument)
-            }
         }
     }
 
