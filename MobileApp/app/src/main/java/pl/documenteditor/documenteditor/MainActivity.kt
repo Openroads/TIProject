@@ -13,13 +13,13 @@ import android.view.MenuItem
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.android.synthetic.main.activity_main2.*
 import kotlinx.android.synthetic.main.app_bar_main2.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.*
-import org.json.JSONObject
 import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
 import pl.documenteditor.documenteditor.model.Document
@@ -197,9 +197,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun doInBackground(vararg url: String?): Document? {
 
             try {
-                val gson = Gson()
                 val toJson = gson.toJson(document)
-                Log.d(TAG, "Main Json           " + toJson)
+                Log.d(TAG, "Main Json           $toJson")
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/documents/")
                     .post(RequestBody.create(JsonUtils.JSON, toJson))
@@ -207,15 +206,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     val responseBody = response.body()?.string()
-                    Log.d(TAG, "Response body: " + responseBody)
-                    val newCreatedDocument = Gson().fromJson(responseBody, Document::class.java)
+                    Log.d(TAG, "Response body with new created document: $responseBody")
+                    val newCreatedDocument = gson.fromJson(responseBody, Document::class.java)
 
-                    val rootObject = JSONObject()
-                    rootObject.put(OPERATION_PROPERTY, Operation.ADD)
-                    val dataRootObject = JSONObject()
-                    dataRootObject.put(DOCUMENT_PROPERTY, responseBody)
-                    rootObject.put(DATA_PROPERTY, dataRootObject)
-                    val asString = rootObject.toString()
+                    val rootElement = JsonObject()
+                    val dataRootElement = JsonObject()
+                    dataRootElement.add(DOCUMENT_PROPERTY, jsonParser.parse(responseBody))
+
+                    rootElement.addProperty(OPERATION_PROPERTY, Operation.ADD.name)
+                    rootElement.add(DATA_PROPERTY, dataRootElement)
+
+                    val asString = gson.toJson(rootElement)
 
                     ws.send(asString)
 
@@ -259,7 +260,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             when (operation) {
                 ADD -> {
-                    val doc = gson.fromJson(operationData.get(DOCUMENT_PROPERTY).asString, Document::class.java)
+//                    val asString = operationData.get(DOCUMENT_PROPERTY).asString
+                    val asString2 = operationData.get(DOCUMENT_PROPERTY).toString()
+                    val doc = gson.fromJson(asString2, Document::class.java)
                     Log.d(TAG, "ADD  document with id $doc")
                     runOnUiThread {
                         documentListAdapter.add(doc)
