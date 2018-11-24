@@ -128,35 +128,38 @@ setStateAsync(state) {
                   <span aria-hidden="true">×</span>
                 </button>
               </div>
-              <ModalBody className="grey-text">
-                <Input
-                  size="sm"
-                  label="Login"
-                  icon="user"
-                  group
-                  type="text"
-                  validate
-                  error="wrong"
-                  success="right"
-                  id="username"
-                  onChange = {this.handleChange}
-                />
-                <Input
-                  size="sm"
-                  type="password"
-                  label="Password"
-                  icon="key"
-                  id="password"
-                  onChange = {this.handleChange}
-                />
-                <label id="errorMessage" className="text-danger"></label>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="secondary" onClick={this.toggle}>
-                  Close
-                </Button>{" "}
-                <Button color="primary" onClick={(event) => this.handleClick(event)}>Sign in</Button>
-              </ModalFooter>
+
+              <form onSubmit={(e) => this.handleClick(e)}>
+                    <ModalBody className="grey-text">
+                      <Input
+                        size="sm"
+                        label="Login"
+                        icon="user"
+                        group
+                        type="text"
+                        validate
+                        error="wrong"
+                        success="right"
+                        id="username"
+                        onChange = {this.handleChange}
+                      />
+                      <Input
+                        size="sm"
+                        type="password"
+                        label="Password"
+                        icon="key"
+                        id="password"
+                        onChange = {this.handleChange}
+                      />
+                      <label id="errorMessage" className="text-danger"></label>
+                    </ModalBody>
+                    <ModalFooter>
+                      <Button color="secondary" onClick={this.toggle}>
+                        Close
+                      </Button>{" "}
+                      <Button type="submit" id="submitButton" color="primary" onClick={(event) => this.handleClick(event)}>Sign in</Button>
+                    </ModalFooter>
+              </form>
             </Modal>
       </div>
     );
