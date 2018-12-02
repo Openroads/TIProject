@@ -28,6 +28,12 @@ import kotlinx.android.synthetic.main.activity_login.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.jetbrains.anko.db.classParser
+import org.jetbrains.anko.db.insert
+import org.jetbrains.anko.db.parseList
+import org.jetbrains.anko.db.select
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper
+import pl.documenteditor.documenteditor.database.database
 import pl.documenteditor.documenteditor.model.User
 import pl.documenteditor.documenteditor.utils.Constants
 import pl.documenteditor.documenteditor.utils.JsonUtils
@@ -258,18 +264,25 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
     inner class UserLoginTask internal constructor(private val user: User) :
         AsyncTask<Void, Void, User>() {
-
+        private val db = database.writableDatabase
         override fun doInBackground(vararg params: Void): User? {
             return try {
                 val gson = Gson()
                 val request = Request.Builder()
                     .url(Constants.REST_SERVERS_ADDRESS + "online-docs/users/login/")
-                    .post(RequestBody.create(JsonUtils.JSON, gson.toJson(user)))
+                    .post(RequestBody.create(JsonUtils.JSON, gson.toJson(this.user)))
                     .build()
                 val response = OkHttpClient().newCall(request).execute()
 
-                val userJson = response.body()?.string()
-                gson.fromJson(userJson, User::class.java)
+                if (response.isSuccessful) {
+                    val userJson = response.body()?.string()
+                    val user = gson.fromJson(userJson, User::class.java)
+
+
+
+                    return user
+                }
+                return null
 
             } catch (ex: Exception) {
                 Log.e(TAG, "Cant connect to rest api server", ex)
@@ -282,19 +295,64 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             mAuthTask = null
             showProgress(false)
 
-            if(user!!.username.isNotBlank() && user.id != 0){
-                // TODO SEND INTENT TO DOCUMENT LIST ACTIVITY
-                println("User id : " + user.id)
-                println("User name : " + user.username)
-                println("User name : " + user.password)
+            if (user != null) {
+                if (user.username.isNotBlank() && user.id != 0) {
+                    user.password = this.user.password
+                    println("User id : " + user.id)
+                    println("User name : " + user.username)
+                    println("User name : " + user.password)
 
-                val intent = Intent(this@LoginActivity, MainActivity::class.java)
-                intent.putExtra(USER_DATA, user)
-                startActivity(intent)
-            }else {
-                password.error = getString(R.string.error_incorrect_password)
-                password.requestFocus()
+                    Log.d(TAG, "Saving user to local database")
+                    val userFromDb = selectUserDataFromLocalDb()
+                    if (userFromDb == null) {
+                        val insert = db.insert(
+                            DocumentDatabaseOpenHelper.TABLE_USERS,
+                            DocumentDatabaseOpenHelper.COLUMN_ID to user.id,
+                            DocumentDatabaseOpenHelper.COLUMN_USER_NAME to user.username,
+                            DocumentDatabaseOpenHelper.COLUMN_USER_PASSWORD to user.password
+                        )
+                        Log.i(TAG, "Inserting status $insert")
+                    }
+                    startMainActivity(user)
+                    return
+                }
+            } else {
+                Log.i(TAG, "Trying to get user from local database")
+                val userFromDb = selectUserDataFromLocalDb()
+
+                if (userFromDb != null) {
+                    startMainActivity(userFromDb)
+                    return
+                }
+
             }
+
+            password.error = getString(R.string.error_incorrect_password)
+            password.requestFocus()
+
+        }
+
+        private fun selectUserDataFromLocalDb(): User? {
+            val userList = db.select(DocumentDatabaseOpenHelper.TABLE_USERS)
+                .whereArgs(
+                    "(" + DocumentDatabaseOpenHelper.COLUMN_USER_NAME + "= {userName} ) AND ("
+                            + DocumentDatabaseOpenHelper.COLUMN_USER_PASSWORD + " = {password} )",
+                    "userName" to this.user.username,
+                    "password" to this.user.password
+                ).exec {
+                    parseList(classParser<User>())
+                }
+            if (userList.isNotEmpty()) {
+                return userList[0]
+            }
+
+            return null
+        }
+
+        private fun startMainActivity(user: User) {
+            val intent = Intent(this@LoginActivity, MainActivity::class.java)
+            intent.putExtra(USER_DATA, user)
+            startActivity(intent)
         }
 
         override fun onCancelled() {

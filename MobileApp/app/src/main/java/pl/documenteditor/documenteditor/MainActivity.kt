@@ -20,8 +20,18 @@ import kotlinx.android.synthetic.main.app_bar_main2.*
 import kotlinx.android.synthetic.main.content_main2.*
 import kotlinx.android.synthetic.main.nav_header_main2.*
 import okhttp3.*
+import org.jetbrains.anko.db.MapRowParser
+import org.jetbrains.anko.db.parseList
+import org.jetbrains.anko.db.select
 import pl.documenteditor.documenteditor.LoginActivity.Companion.USER_DATA
 import pl.documenteditor.documenteditor.adapters.DocumentListAdapter
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper.Companion.COLUMN_CONTENT
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper.Companion.COLUMN_EDITING_BY
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper.Companion.COLUMN_ID
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper.Companion.COLUMN_TITLE
+import pl.documenteditor.documenteditor.database.DocumentDatabaseOpenHelper.Companion.COLUMN_VERSION
+import pl.documenteditor.documenteditor.database.database
 import pl.documenteditor.documenteditor.model.Document
 import pl.documenteditor.documenteditor.model.NewDocument
 import pl.documenteditor.documenteditor.model.Operation
@@ -111,14 +121,30 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             try {
                 val request = Request.Builder().url(url[0]).build()
-                val response = client.newCall(request).execute();
+                val response = client.newCall(request).execute()
                 val string = response.body()?.string()
                 println(string)
                 val lDok = GsonBuilder().create().fromJson(string, Array<Document>::class.java).toList()
+                //save to local database
+                val db = database.writableDatabase
+                db.execSQL("delete from " + DocumentDatabaseOpenHelper.TABLE_DOCUMENTS)
+                for (doc in lDok) {
+                    val test = DocumentDatabaseOpenHelper.insertDocument(db, doc)
+                    Log.i(TAG, test.toString())
+                }
 
                 return lDok
             } catch (ex: Exception) {
                 Log.e(TAG, "Cant get data from rest api server", ex)
+                Log.i(TAG, "Reading data from local database")
+
+                val list = database.use {
+                    select(DocumentDatabaseOpenHelper.TABLE_DOCUMENTS).exec {
+                        parseList(DocumentRowParser())
+                    }
+                }
+
+                return list
             }
 
             return emptyList()
@@ -127,8 +153,23 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         override fun onPostExecute(result: List<Document>?) {
             super.onPostExecute(result)
 
-            documentListAdapter = DocumentListAdapter(this@MainActivity, result!!.toMutableList())
+            val documentList = result!!.toMutableList()
+            documentListAdapter = DocumentListAdapter(this@MainActivity, documentList)
             docListView.adapter = documentListAdapter
+
+        }
+    }
+
+    inner class DocumentRowParser : MapRowParser<Document> {
+        override fun parseRow(columns: Map<String, Any?>): Document {
+            val editingBy =
+                return Document(
+                    Integer.valueOf(columns[COLUMN_ID].toString()),
+                    columns[COLUMN_TITLE].toString(),
+                    columns[COLUMN_CONTENT] as String,
+                    columns[COLUMN_EDITING_BY] as String?,
+                    Integer.valueOf(columns[COLUMN_VERSION].toString())
+                )
         }
     }
 
