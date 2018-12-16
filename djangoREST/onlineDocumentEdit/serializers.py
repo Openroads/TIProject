@@ -20,7 +20,6 @@ class DocumentDetailsSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # documents = serializers.PrimaryKeyRelatedField(many=True, queryset=Document.objects.all())
 
     class Meta:
         model = User

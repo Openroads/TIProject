@@ -80,7 +80,7 @@ class DocumentEditingActivity : AppCompatActivity() {
             document?.content = documentContext.text.toString()
             UpdateDocumentTask().execute()
 
-            //onBackPressed()//TODO TO EXPLAIN
+            //onBackPressed()
             UnlockDocument().execute()
             finish()
 
